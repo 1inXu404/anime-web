@@ -179,3 +179,24 @@ export async function getAllEpisodes(subjectId: number): Promise<DisplayEpisode[
   }
   return episodes
 }
+
+// ─── History ───
+
+export async function getHistorySubjects(month: number): Promise<Record<number, SubjectBrowse[]>> {
+  // Try local cache
+  const local = await fetchLocalJSON<Record<number, SubjectBrowse[]>>('history.json')
+  if (local) return local
+  // Fallback: minimal API fetch
+  const result: Record<number, SubjectBrowse[]> = {}
+  const now = new Date()
+  for (let y = now.getFullYear() - 1; y >= now.getFullYear() - 5; y--) {
+    const params = new URLSearchParams({
+      type: '2', sort: 'date',
+      year: String(y), month: String(month),
+      limit: '100', offset: '0',
+    })
+    const data = await fetchJSON<PagedSubjects>(`${BGM_BASE}/v0/subjects?${params}`)
+    result[y] = data.data || []
+  }
+  return result
+}

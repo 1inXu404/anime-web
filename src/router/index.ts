@@ -19,6 +19,11 @@ const router = createRouter({
       component: () => import('@/views/AnimeDetailView.vue'),
       props: (route) => ({ id: Number(route.params.id) }),
     },
+    {
+      path: '/history',
+      name: 'history',
+      component: () => import('@/views/HistoryView.vue'),
+    },
   ],
   scrollBehavior(to, from, savedPosition) {
     if (savedPosition) {
