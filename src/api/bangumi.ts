@@ -10,13 +10,9 @@ import type {
 } from '@/types/bangumi'
 
 const BGM_BASE = 'https://api.bgm.tv'
-const USER_AGENT = 'anime-web/1.0 (https://github.com/1inXu404/anime-web)'
 
 function headers(): Record<string, string> {
-  return {
-    'User-Agent': USER_AGENT,
-    Accept: 'application/json',
-  }
+  return { Accept: 'application/json' }
 }
 
 function unescapeHtml(str: string): string {
@@ -26,11 +22,24 @@ function unescapeHtml(str: string): string {
 }
 
 async function fetchJSON<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, init)
-  if (!res.ok) {
-    throw new Error(`HTTP ${res.status}: ${res.statusText} (${url})`)
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 15000)
+  try {
+    const res = await fetch(url, {
+      ...init,
+      signal: controller.signal,
+      credentials: 'omit',
+    })
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status} (${url})`)
+    }
+    return res.json()
+  } catch (e) {
+    console.error(`[Bangumi API] ${url}:`, e)
+    throw e
+  } finally {
+    clearTimeout(timeout)
   }
-  return res.json()
 }
 
 // ─── Calendar ───
@@ -157,16 +166,24 @@ export async function getAllEpisodes(subjectId: number): Promise<DisplayEpisode[
 // ─── Search ───
 
 export async function searchSubjects(keyword: string, limit = 20): Promise<PagedSubjects> {
-  const res = await fetch(`${BGM_BASE}/v0/search/subjects`, {
-    method: 'POST',
-    headers: { ...headers(), 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      keyword,
-      sort: 'rank',
-      filter: { type: [2], nsfw: false },
-    }),
-  })
-  if (!res.ok) throw new Error(`Search failed: ${res.status}`)
-  const data = await res.json()
-  return { ...data, limit: limit }
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 15000)
+  try {
+    const res = await fetch(`${BGM_BASE}/v0/search/subjects`, {
+      method: 'POST',
+      headers: { ...headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        keyword,
+        sort: 'rank',
+        filter: { type: [2], nsfw: false },
+      }),
+      signal: controller.signal,
+      credentials: 'omit',
+    })
+    if (!res.ok) throw new Error(`Search failed: ${res.status}`)
+    const data = await res.json()
+    return { ...data, limit: limit }
+  } finally {
+    clearTimeout(timeout)
+  }
 }
