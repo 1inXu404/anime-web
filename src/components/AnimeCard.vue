@@ -26,12 +26,12 @@ const imageLoaded = ref(false)
 
 const placeholderBg = computed(() => {
   const colors = [
-    'bg-rose-400',    'bg-amber-400',   'bg-emerald-400',
-    'bg-sky-400',     'bg-violet-400',  'bg-pink-400',
-    'bg-teal-400',    'bg-orange-400',  'bg-indigo-400',
-    'bg-lime-400',    'bg-cyan-400',    'bg-fuchsia-400',
-    'bg-red-400',     'bg-yellow-400',  'bg-green-400',
-    'bg-blue-400',
+    'bg-rose-300',    'bg-amber-300',   'bg-emerald-300',
+    'bg-sky-300',     'bg-violet-300',  'bg-pink-300',
+    'bg-teal-300',    'bg-orange-300',  'bg-indigo-300',
+    'bg-lime-300',    'bg-cyan-300',    'bg-fuchsia-300',
+    'bg-red-300',     'bg-yellow-300',  'bg-green-300',
+    'bg-blue-300',
   ]
   const index = props.title.charCodeAt(0) % colors.length
   return colors[index]
@@ -60,16 +60,21 @@ const formattedDate = computed(() => {
     <!-- Image Section -->
     <div class="relative aspect-[3/4] overflow-hidden bg-zinc-100 dark:bg-zinc-800">
       <!-- Always show colored placeholder first -->
-      <div class="absolute inset-0 flex items-center justify-center" :class="placeholderBg">
-        <span class="text-white/80 text-4xl font-bold select-none">{{ initial }}</span>
+      <div class="absolute inset-0 flex items-center justify-center p-4" :class="placeholderBg">
+        <span class="text-white/70 text-sm sm:text-base font-bold text-center leading-snug line-clamp-4 select-none">{{ title }}</span>
       </div>
       <!-- Image loads on top of placeholder -->
       <img
         v-if="image"
         :src="image"
         :alt="title"
-        class="absolute inset-0 w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
-        :class="imageLoaded ? 'opacity-100' : 'opacity-0'"
+        class="absolute inset-0 w-full h-full object-cover group-hover:scale-105"
+        :style="{
+          opacity: imageLoaded ? 1 : 0,
+          filter: imageLoaded ? 'blur(0)' : 'blur(8px)',
+          transform: imageLoaded ? 'scale(1)' : 'scale(1.05)',
+          transition: 'opacity 0.6s ease, filter 0.6s ease, transform 0.6s ease',
+        }"
         loading="lazy"
         decoding="async"
         fetchpriority="low"
