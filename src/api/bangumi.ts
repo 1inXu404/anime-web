@@ -11,15 +11,12 @@ import type {
 
 const BGM_BASE = 'https://api.bgm.tv'
 const USER_AGENT = 'anime-web/1.0 (https://github.com/1inXu404/anime-web)'
-const TOKEN = import.meta.env.VITE_BANGUMI_TOKEN || ''
 
-function headers(auth = false): Record<string, string> {
-  const h: Record<string, string> = {
+function headers(): Record<string, string> {
+  return {
     'User-Agent': USER_AGENT,
     Accept: 'application/json',
   }
-  if (auth) h['Authorization'] = `Bearer ${TOKEN}`
-  return h
 }
 
 function unescapeHtml(str: string): string {
