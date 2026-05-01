@@ -1,0 +1,166 @@
+@import "tailwindcss";
+@variant dark (&:where(.dark, .dark *));
+
+/* ─── Smooth Theme Transition ─── */
+html {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+html * {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.15s ease;
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  body {
+    @apply bg-zinc-50 text-zinc-900 antialiased;
+    @apply dark:bg-zinc-950 dark:text-zinc-100;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+      'Helvetica Neue', Arial, 'Noto Sans SC', sans-serif;
+  }
+}
+
+@layer utilities {
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+/* Smooth page transitions */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.25s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* ─── Glass Morphism Utilities ─── */
+@layer utilities {
+  .glass {
+    @apply bg-white/70 backdrop-blur-xl border border-white/20 shadow-lg;
+    @apply dark:bg-zinc-900/70 dark:border-zinc-700/30 dark:shadow-zinc-950/50;
+  }
+  .glass-dark {
+    @apply bg-zinc-900/70 backdrop-blur-xl border border-zinc-800/50 shadow-lg;
+  }
+  .glass-subtle {
+    @apply bg-white/40 backdrop-blur-md border border-white/10;
+    @apply dark:bg-zinc-900/40 dark:border-zinc-700/20;
+  }
+}
+
+/* ─── Text Gradients ─── */
+@layer utilities {
+  .text-gradient-primary {
+    @apply bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent;
+  }
+  .text-gradient-warm {
+    @apply bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 bg-clip-text text-transparent;
+  }
+  .text-gradient-cool {
+    @apply bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-500 bg-clip-text text-transparent;
+  }
+}
+
+/* ─── Card Glow Effects ─── */
+@layer utilities {
+  .card-glow-indigo {
+    box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.08), 0 4px 16px rgba(99, 102, 241, 0.06);
+  }
+  .card-glow-indigo:hover {
+    box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.15), 0 8px 32px rgba(99, 102, 241, 0.1);
+  }
+}
+
+/* ─── Background Patterns ─── */
+@layer base {
+  .bg-dot-pattern {
+    background-image: radial-gradient(circle, #e4e4e7 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  .dark .bg-dot-pattern {
+    background-image: radial-gradient(circle, #3f3f46 1px, transparent 1px);
+  }
+  .bg-grid-pattern {
+    background-image:
+      linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+}
+
+/* ─── Smooth Animations ─── */
+@layer utilities {
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+  .animate-shimmer {
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ─── Better Scrollbar ─── */
+@layer base {
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #d4d4d8;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #a1a1aa;
+  }
+  .dark ::-webkit-scrollbar-thumb {
+    background: #52525b;
+  }
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: #71717a;
+  }
+}
+
+/* ─── Enhanced Body Background ─── */
+@layer base {
+  body {
+    background-attachment: fixed;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.06), transparent),
+      radial-gradient(ellipse 60% 40% at 100% 80%, rgba(236, 72, 153, 0.04), transparent);
+  }
+  .dark body {
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.08), transparent),
+      radial-gradient(ellipse 60% 40% at 100% 80%, rgba(236, 72, 153, 0.06), transparent);
+  }
+}
