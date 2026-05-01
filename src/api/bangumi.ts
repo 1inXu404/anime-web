@@ -235,3 +235,24 @@ export async function getHistorySubjects(): Promise<SubjectBrowse[]> {
   }
   return all
 }
+
+// ─── Search ───
+
+export async function searchSubjects(keyword: string, limit = 30): Promise<PagedSubjects> {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 15000)
+  try {
+    const res = await fetch(`${BGM_BASE}/v0/search/subjects`, {
+      method: 'POST',
+      headers: { ...headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ keyword, sort: 'rank', filter: { type: [2], nsfw: false } }),
+      signal: controller.signal,
+      credentials: 'omit',
+    })
+    if (!res.ok) throw new Error(`Search failed: ${res.status}`)
+    const data = await res.json()
+    return { data: data.data || [], total: data.total || 0, limit, offset: 0 }
+  } finally {
+    clearTimeout(timeout)
+  }
+}

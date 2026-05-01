@@ -24,6 +24,12 @@ const router = createRouter({
       name: 'history',
       component: () => import('@/views/HistoryView.vue'),
     },
+    {
+      path: '/search',
+      name: 'search',
+      component: () => import('@/views/SearchView.vue'),
+      props: (route) => ({ q: (route.query.q as string) || '' }),
+    },
   ],
   scrollBehavior(to, from, savedPosition) {
     if (savedPosition) {
