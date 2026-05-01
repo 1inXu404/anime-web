@@ -19,6 +19,8 @@ async function fetchLocalJSON<T>(filename: string): Promise<T | null> {
   try {
     const res = await fetch(`${BASE}data/${filename}`)
     if (!res.ok) return null
+    const ct = res.headers.get('content-type') || ''
+    if (!ct.includes('application/json')) return null
     return res.json()
   } catch {
     return null
