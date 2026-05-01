@@ -1,4 +1,4 @@
-import { ref, computed, onMounted, onUnmounted, type Ref } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick, type Ref } from 'vue'
 
 const BREAKPOINTS: [number, number][] = [
   [1280, 6],
@@ -23,22 +23,32 @@ export function useResponsiveGrid(containerRef: Ref<HTMLElement | null>) {
     gridTemplateColumns: `repeat(${columnCount.value}, 1fr)`,
   }))
 
+  function updateColumns() {
+    const width = containerRef.value?.clientWidth || window.innerWidth
+    if (width > 0) {
+      columnCount.value = resolveColumns(width)
+    }
+  }
+
   function handleResize(entries: ResizeObserverEntry[]) {
     const entry = entries[0]
-    if (entry) {
+    if (entry && entry.contentRect.width > 0) {
       columnCount.value = resolveColumns(entry.contentRect.width)
     }
   }
 
-  onMounted(() => {
-    const el = containerRef.value
-    if (!el) return
-
-    // Set initial value
-    columnCount.value = resolveColumns(el.clientWidth)
-
-    observer = new ResizeObserver(handleResize)
-    observer.observe(el)
+  onMounted(async () => {
+    await nextTick()
+    // iOS Safari sometimes reports 0 clientWidth synchronously;
+    // rAF + fallback to window.innerWidth ensures we get a real value
+    requestAnimationFrame(() => {
+      updateColumns()
+      const el = containerRef.value
+      if (el && 'ResizeObserver' in window) {
+        observer = new ResizeObserver(handleResize)
+        observer.observe(el)
+      }
+    })
   })
 
   onUnmounted(() => {
