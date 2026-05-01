@@ -155,33 +155,67 @@ async function main() {
   }
   console.log(`  Total: ${totalMonths} months cached\n`)
 
-  // 3. Subject details — only calendar anime, incremental save
-  console.log('[3/3] Subject details (calendar + current season)...')
+  // 3. Subject details — all anime, airing daily / completed once
+  console.log('[3/3] Subject details (all anime, smart caching)...')
   const animePath = path.join(OUT_DIR, 'anime.json')
   const cachedAnime: Record<number, any> = readJSON(animePath, {})
+  const curMonth = now.getMonth() + 1
+  const curYear = now.getFullYear()
+  const isFirstOfMonth = now.getDate() === 1
 
-  // Collect IDs: calendar + current season
-  const detailIds = new Set<number>(calIds)
-  const curKey = seasonKey(now.getFullYear(), now.getMonth() + 1)
-  const curFile = path.join(SEASONS_DIR, `${curKey}.json`)
-  if (fs.existsSync(curFile)) {
-    for (const s of readJSON<any[]>(curFile, [])) detailIds.add(s.id)
+  // Collect ALL subject IDs from ALL seasonal data
+  const allIds = new Set<number>(calIds)
+  const seasonFiles = fs.readdirSync(SEASONS_DIR).filter(f => f.endsWith('.json'))
+  for (const file of seasonFiles) {
+    const subjects = readJSON<any[]>(path.join(SEASONS_DIR, file), [])
+    for (const s of subjects) allIds.add(s.id)
   }
 
-  // Filter out already-cached IDs
-  const todo = [...detailIds].filter(id => !cachedAnime[id])
-  console.log(`  ${todo.length} new subjects to fetch (${Object.keys(cachedAnime).length} already cached)`)
+  // Determine "airing" months: current + next 2
+  const airingMonths = new Set<string>()
+  for (let m = curMonth; m <= curMonth + 2; m++) {
+    const y = curYear + Math.floor((m - 1) / 12)
+    const mo = ((m - 1) % 12) + 1
+    airingMonths.add(seasonKey(y, mo))
+  }
+
+  // Separate IDs: need fetch vs already cached
+  const toFetch: number[] = []
+  let skipped = 0
+  for (const id of allIds) {
+    if (!cachedAnime[id]) {
+      toFetch.push(id) // Never cached
+    } else if (isFirstOfMonth) {
+      toFetch.push(id) // Monthly full refresh
+    } else {
+      // Check if this ID is from an airing month
+      const detail = cachedAnime[id].detail
+      if (detail?.date) {
+        const parts = detail.date.split('-')
+        if (parts.length >= 2) {
+          const key = `${parts[0]}-${parts[1]}`
+          if (airingMonths.has(key)) {
+            toFetch.push(id) // Airing — needs update
+            continue
+          }
+        }
+      }
+      skipped++
+    }
+  }
+
+  console.log(`  ${toFetch.length} to fetch, ${skipped} skipped (completed), ${Object.keys(cachedAnime).length} in cache`)
   let done = 0
-  for (const id of todo) {
+  for (const id of toFetch) {
     try {
       const [detail, episodes] = await Promise.all([
         fetchSubjectDetail(id), fetchAllEpisodes(id),
       ])
-      cachedAnime[id] = { detail, episodes }
+      cachedAnime[id] = { detail, episodes, updatedAt: new Date().toISOString() }
       done++
       if (done % 10 === 0) {
         writeJSON(animePath, cachedAnime)
-        console.log(`  ${done}/${todo.length} (saved)`)
+        console.log(`  ${done}/${toFetch.length} (saved)`)
       }
       await sleep(300)
     } catch (e) {
