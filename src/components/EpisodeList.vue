@@ -9,11 +9,11 @@ defineProps<{
 <template>
   <div class="rounded-xl bg-white border border-zinc-200 overflow-hidden dark:bg-zinc-900 dark:border-zinc-800">
     <!-- Header -->
-    <div class="grid grid-cols-[3rem_1fr] sm:grid-cols-[3rem_1fr_8rem_6rem] px-4 py-2.5 border-b border-zinc-200 bg-zinc-50 text-xs font-medium text-zinc-500 uppercase tracking-wider dark:bg-zinc-800/50 dark:text-zinc-400 dark:border-zinc-800">
+    <div class="grid grid-cols-[2.5rem_1fr_5.5rem_3.5rem] sm:grid-cols-[3rem_1fr_8rem_6rem] px-3 sm:px-4 py-2.5 border-b border-zinc-200 bg-zinc-50 text-xs font-medium text-zinc-500 uppercase tracking-wider dark:bg-zinc-800/50 dark:text-zinc-400 dark:border-zinc-800">
       <span>#</span>
       <span>标题</span>
-      <span class="hidden sm:block text-right">播出日期</span>
-      <span class="hidden sm:block text-right">时长</span>
+      <span class="text-right">播出日期</span>
+      <span class="text-right">时长</span>
     </div>
 
     <!-- Scrollable body -->
@@ -30,7 +30,7 @@ defineProps<{
       <div
         v-for="(ep, index) in episodes"
         :key="ep.id"
-        class="grid grid-cols-[3rem_1fr] sm:grid-cols-[3rem_1fr_8rem_6rem] items-center px-4 py-3 border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50 transition-colors duration-150 dark:text-zinc-300 dark:hover:bg-zinc-800/50 dark:border-zinc-800"
+        class="grid grid-cols-[2.5rem_1fr_5.5rem_3.5rem] sm:grid-cols-[3rem_1fr_8rem_6rem] items-center px-3 sm:px-4 py-3 border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50 transition-colors duration-150 dark:text-zinc-300 dark:hover:bg-zinc-800/50 dark:border-zinc-800"
         :class="{ 'bg-zinc-50/50 dark:bg-zinc-800/30': index % 2 === 1 }"
       >
         <!-- Episode number badge -->
@@ -46,12 +46,12 @@ defineProps<{
         </span>
 
         <!-- Air date -->
-        <span class="hidden sm:block text-sm text-zinc-500 dark:text-zinc-400 text-right tabular-nums">
+        <span class="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 text-right tabular-nums truncate">
           {{ ep.airdate }}
         </span>
 
         <!-- Duration -->
-        <span class="hidden sm:block text-sm text-zinc-400 dark:text-zinc-500 text-right tabular-nums">
+        <span class="text-xs sm:text-sm text-zinc-400 dark:text-zinc-500 text-right tabular-nums">
           {{ ep.duration }}
         </span>
       </div>
