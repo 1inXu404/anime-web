@@ -62,7 +62,7 @@ const navLinks = [
           <div class="relative">
             <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
             <input v-model="searchQuery" type="text" placeholder="搜索番剧..."
-              class="w-40 pl-8 pr-3 py-1.5 rounded-lg text-sm border border-zinc-200 bg-zinc-50 text-zinc-700 placeholder-zinc-400 outline-none focus:w-56 focus:border-indigo-300 focus:bg-white transition-all dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-200 dark:placeholder-zinc-500 dark:focus:border-indigo-600"
+              class="w-40 pl-8 pr-3 py-1.5 rounded-lg text-sm border border-zinc-200 bg-zinc-50 text-zinc-700 placeholder-zinc-400 outline-none focus:w-56 focus:border-indigo-300 focus:bg-white transition-all dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-200 dark:placeholder-zinc-500 dark:focus:bg-zinc-700 dark:focus:border-indigo-500 dark:focus:text-zinc-100"
             />
           </div>
         </form>
@@ -134,7 +134,7 @@ const navLinks = [
           <div class="mx-auto max-w-7xl space-y-1 px-4 pb-4 pt-2">
             <form class="mb-2" @submit.prevent="doSearch">
               <input v-model="searchQuery" type="text" placeholder="搜索番剧..."
-                class="w-full px-3 py-2 rounded-lg text-sm border border-zinc-200 bg-zinc-50 text-zinc-700 placeholder-zinc-400 outline-none dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-200 dark:placeholder-zinc-500"
+                class="w-full px-3 py-2 rounded-lg text-sm border border-zinc-200 bg-zinc-50 text-zinc-700 placeholder-zinc-400 outline-none focus:border-indigo-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-200 dark:placeholder-zinc-500 dark:focus:bg-zinc-700 dark:focus:text-zinc-100"
               />
             </form>
             <RouterLink

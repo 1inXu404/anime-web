@@ -32,6 +32,12 @@ function toggleTheme() {
   applyTheme()
 }
 
+// Ensure isDark stays in sync with the DOM class on every render
+watchEffect(() => {
+  const dark = document.documentElement.classList.contains('dark')
+  if (isDark.value !== dark) isDark.value = dark
+})
+
 // Listen for system preference changes
 if (window.matchMedia) {
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme)
