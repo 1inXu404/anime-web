@@ -11,6 +11,29 @@ import type {
 
 const BGM_BASE = 'https://api.bgm.tv'
 
+// ─── Local JSON cache ───
+
+async function fetchLocalJSON<T>(filename: string): Promise<T | null> {
+  try {
+    const res = await fetch(`/data/${filename}`)
+    if (!res.ok) return null
+    return res.json()
+  } catch {
+    return null
+  }
+}
+
+// Cache loaded once on first use
+let animeCache: Record<number, { detail: Subject; episodes: any[] }> | null = null
+async function loadAnimeCache() {
+  if (animeCache) return animeCache
+  const data = await fetchLocalJSON<Record<number, { detail: Subject; episodes: any[] }>>('anime.json')
+  animeCache = data
+  return animeCache
+}
+
+// ─── Helpers ───
+
 function headers(): Record<string, string> {
   return { Accept: 'application/json' }
 }
@@ -30,13 +53,8 @@ async function fetchJSON<T>(url: string, init?: RequestInit): Promise<T> {
       signal: controller.signal,
       credentials: 'omit',
     })
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status} (${url})`)
-    }
+    if (!res.ok) throw new Error(`HTTP ${res.status} (${url})`)
     return res.json()
-  } catch (e) {
-    console.error(`[Bangumi API] ${url}:`, e)
-    throw e
   } finally {
     clearTimeout(timeout)
   }
@@ -45,145 +63,119 @@ async function fetchJSON<T>(url: string, init?: RequestInit): Promise<T> {
 // ─── Calendar ───
 
 export async function getCalendar(): Promise<CleanCalendarDay[]> {
-  const data = await fetchJSON<CalendarDay[]>(
-    `${BGM_BASE}/calendar`,
-    { headers: headers() }
-  )
-  return data.map((day) => ({
-    weekday: day.weekday,
-    items: day.items.map(
-      (item): CleanCalendarItem => ({
+  // Try local cache first
+  const local = await fetchLocalJSON<CalendarDay[]>('calendar.json')
+  if (local) {
+    return local.map((day) => ({
+      weekday: day.weekday,
+      items: day.items.map((item): CleanCalendarItem => ({
         id: item.id,
         name: item.name,
-        name_cn: unescapeHtml(item.name_cn),
+        name_cn: item.name_cn || '',
         air_date: item.air_date,
         air_weekday: item.air_weekday,
         images: item.images,
         rating: item.rating,
         rank: item.rank,
         summary: item.summary,
-      })
-    ),
+      })),
+    }))
+  }
+  // Fallback to API
+  const data = await fetchJSON<CalendarDay[]>(`${BGM_BASE}/calendar`)
+  return data.map((day) => ({
+    weekday: day.weekday,
+    items: day.items.map((item): CleanCalendarItem => ({
+      id: item.id,
+      name: item.name,
+      name_cn: unescapeHtml(item.name_cn || ''),
+      air_date: item.air_date,
+      air_weekday: item.air_weekday,
+      images: item.images,
+      rating: item.rating,
+      rank: item.rank,
+      summary: item.summary,
+    })),
   }))
 }
 
-// ─── Subjects Browse (seasonal) ───
+// ─── Subjects Browse ───
 
 export async function getSubjects(
-  year: number,
-  month: number,
-  limit = 50,
-  offset = 0
+  year: number, month: number, limit = 50, offset = 0
 ): Promise<PagedSubjects> {
+  // Try local seasons index
+  const local = await fetchLocalJSON<Record<string, SubjectBrowse[]>>('seasons-index.json')
+  if (local) {
+    const key = `${year}-${String(month).padStart(2, '0')}`
+    const data = local[key]
+    if (data) {
+      const slice = data.slice(offset, offset + limit)
+      return { data: slice, total: data.length, limit, offset }
+    }
+    return { data: [], total: 0, limit, offset }
+  }
+  // Fallback to API
   const params = new URLSearchParams({
-    type: '2', // Anime
-    sort: 'date',
-    year: String(year),
-    month: String(month),
-    limit: String(limit),
-    offset: String(offset),
+    type: '2', sort: 'date',
+    year: String(year), month: String(month),
+    limit: String(limit), offset: String(offset),
   })
-  return fetchJSON<PagedSubjects>(
-    `${BGM_BASE}/v0/subjects?${params}`,
-    { headers: headers() }
-  )
+  return fetchJSON<PagedSubjects>(`${BGM_BASE}/v0/subjects?${params}`)
 }
 
-export async function getAllSubjects(
-  year: number,
-  month: number
-): Promise<SubjectBrowse[]> {
-  const all: SubjectBrowse[] = []
-  let offset = 0
-  const limit = 50
-  while (true) {
-    const data = await getSubjects(year, month, limit, offset)
-    if (!data.data || data.data.length === 0) break
-    all.push(...data.data)
-    if (data.data.length < limit) break
-    offset += limit
-    await new Promise((r) => setTimeout(r, 100))
-  }
-  return all
+export async function getAllSubjects(year: number, month: number): Promise<SubjectBrowse[]> {
+  const data = await getSubjects(year, month, 200)
+  return data.data
 }
 
 // ─── Subject Detail ───
 
 export async function getSubject(id: number): Promise<Subject> {
-  return fetchJSON<Subject>(
-    `${BGM_BASE}/v0/subjects/${id}`,
-    { headers: headers() }
-  )
+  // Try local cache
+  const cache = await loadAnimeCache()
+  if (cache?.[id]?.detail) return cache[id].detail
+  // Fallback to API
+  return fetchJSON<Subject>(`${BGM_BASE}/v0/subjects/${id}`)
 }
 
 // ─── Episodes ───
 
-export async function getEpisodes(
-  subjectId: number,
-  offset = 0,
-  limit = 100
-): Promise<PagedEpisodes> {
-  const params = new URLSearchParams({
-    subject_id: String(subjectId),
-    offset: String(offset),
-    limit: String(limit),
-  })
-  return fetchJSON<PagedEpisodes>(
-    `${BGM_BASE}/v0/episodes?${params}`,
-    { headers: headers() }
-  )
-}
-
 export async function getAllEpisodes(subjectId: number): Promise<DisplayEpisode[]> {
+  // Try local cache
+  const cache = await loadAnimeCache()
+  if (cache?.[subjectId]?.episodes) {
+    return cache[subjectId].episodes
+      .filter((ep: any) => ep.type === 0)
+      .map((ep: any): DisplayEpisode => ({
+        id: ep.id, sort: ep.sort,
+        name: ep.name, name_cn: ep.name_cn,
+        airdate: ep.airdate, duration: ep.duration,
+        type: ep.type, desc: ep.desc,
+      }))
+  }
+  // Fallback to API
   const episodes: DisplayEpisode[] = []
   let offset = 0
-  const limit = 100
   while (true) {
-    const data = await getEpisodes(subjectId, offset, limit)
-    if (!data.data || data.data.length === 0) break
-    const mainEps = data.data
-      .filter((ep) => ep.type === 0) // Main episodes only
-      .map(
-        (ep): DisplayEpisode => ({
-          id: ep.id,
-          sort: ep.sort,
-          name: ep.name,
-          name_cn: ep.name_cn,
-          airdate: ep.airdate,
-          duration: ep.duration,
-          type: ep.type,
-          desc: ep.desc,
-        })
-      )
-    episodes.push(...mainEps)
-    if (data.data.length < limit) break
-    offset += limit
-    await new Promise((r) => setTimeout(r, 100))
+    const params = new URLSearchParams({
+      subject_id: String(subjectId),
+      offset: String(offset), limit: '100',
+    })
+    const data = await fetchJSON<PagedEpisodes>(`${BGM_BASE}/v0/episodes?${params}`)
+    if (!data.data?.length) break
+    episodes.push(...data.data
+      .filter((ep) => ep.type === 0)
+      .map((ep): DisplayEpisode => ({
+        id: ep.id, sort: ep.sort,
+        name: ep.name, name_cn: ep.name_cn,
+        airdate: ep.airdate, duration: ep.duration,
+        type: ep.type, desc: ep.desc,
+      }))
+    )
+    if (data.data.length < 100) break
+    offset += 100
+    await new Promise((r) => setTimeout(r, 150))
   }
   return episodes
-}
-
-// ─── Search ───
-
-export async function searchSubjects(keyword: string, limit = 20): Promise<PagedSubjects> {
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 15000)
-  try {
-    const res = await fetch(`${BGM_BASE}/v0/search/subjects`, {
-      method: 'POST',
-      headers: { ...headers(), 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        keyword,
-        sort: 'rank',
-        filter: { type: [2], nsfw: false },
-      }),
-      signal: controller.signal,
-      credentials: 'omit',
-    })
-    if (!res.ok) throw new Error(`Search failed: ${res.status}`)
-    const data = await res.json()
-    return { ...data, limit: limit }
-  } finally {
-    clearTimeout(timeout)
-  }
 }
