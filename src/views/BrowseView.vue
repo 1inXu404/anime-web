@@ -1,12 +1,15 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { getAllSubjects } from '@/api/bangumi'
 import type { SubjectBrowse } from '@/types/bangumi'
+import { useContentFilter } from '@/composables/useContentFilter'
 import BentoGrid from '@/components/BentoGrid.vue'
 import AnimeCard from '@/components/AnimeCard.vue'
 import YearMonthPicker from '@/components/YearMonthPicker.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import ErrorState from '@/components/ErrorState.vue'
+
+const { showR18 } = useContentFilter()
 
 const now = new Date()
 const year = ref(now.getFullYear())
@@ -15,6 +18,12 @@ const month = ref(now.getMonth() + 1)
 const animeList = ref<SubjectBrowse[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
+
+const filteredList = computed(() =>
+  showR18.value
+    ? animeList.value
+    : animeList.value.filter(a => !a.tags?.some(t => t.name === '里番'))
+)
 
 async function fetchAnime() {
   loading.value = true
@@ -72,7 +81,7 @@ watch([year, month], fetchAnime, { immediate: true })
 
     <!-- Empty State -->
     <div
-      v-else-if="animeList.length === 0"
+      v-else-if="filteredList.length === 0"
       class="flex flex-col items-center justify-center min-h-[40vh] gap-6"
     >
       <div class="relative">
@@ -110,13 +119,13 @@ watch([year, month], fetchAnime, { immediate: true })
     <template v-else>
       <div class="mb-6">
         <span class="inline-flex items-center px-3 py-1 rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-sm text-zinc-600 dark:text-zinc-400 font-medium shadow-sm">
-          共 {{ animeList.length }} 部作品
+          共 {{ filteredList.length }} 部作品
         </span>
       </div>
 
       <BentoGrid>
         <AnimeCard
-          v-for="anime in animeList"
+          v-for="anime in filteredList"
           :key="anime.id"
           :id="anime.id"
           :title="anime.name_cn || anime.name"
