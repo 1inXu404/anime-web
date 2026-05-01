@@ -2,9 +2,10 @@ import { ref, computed, onMounted, onUnmounted, type Ref } from 'vue'
 
 const BREAKPOINTS: [number, number][] = [
   [1280, 6],
-  [1024, 4],
-  [768, 3],
-  [640, 2],
+  [1024, 5],
+  [768, 4],
+  [640, 3],
+  [360, 2],
 ]
 
 function resolveColumns(width: number): number {

@@ -54,6 +54,7 @@ const formattedDate = computed(() => {
 <template>
   <router-link
     :to="`/anime/${id}`"
+    style="touch-action: manipulation"
     class="block rounded-xl overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 transition-all duration-300 group shadow-md shadow-zinc-200/50 dark:shadow-zinc-950/50 hover:shadow-xl hover:shadow-indigo-100/30 dark:hover:shadow-zinc-950/60 hover:-translate-y-1 hover:ring-1 hover:ring-indigo-100 dark:hover:ring-zinc-700"
   >
     <!-- Image Section -->
@@ -70,12 +71,12 @@ const formattedDate = computed(() => {
         class="w-full h-full flex items-center justify-center"
         :class="placeholderBg"
       >
-        <span class="text-white text-4xl font-bold select-none">{{ initial }}</span>
+        <span class="text-white text-4xl font-bold select-none pointer-events-none">{{ initial }}</span>
       </div>
 
       <!-- Gradient Overlay -->
       <div
-        class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"
+        class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none"
       />
 
       <!-- Score Badge -->

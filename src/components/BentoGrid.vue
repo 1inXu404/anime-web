@@ -18,7 +18,7 @@ const resolvedCols = computed(() => props.cols ?? columnCount.value)
 <template>
   <div
     ref="containerRef"
-    class="grid gap-4 sm:gap-5"
+    class="grid gap-2.5 sm:gap-4 lg:gap-5"
     :style="{ gridTemplateColumns: `repeat(${resolvedCols}, minmax(0, 1fr))` }"
   >
     <slot />
