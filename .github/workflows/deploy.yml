@@ -25,6 +25,7 @@ jobs:
         with: { node-version: 20, cache: npm }
       - run: npm ci
       - run: npm run fetch-data
+      - run: npx tsx scripts/generate-history.ts
       - name: Commit updated data
         run: |
           git config user.name "github-actions[bot]"

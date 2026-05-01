@@ -182,11 +182,14 @@ export async function getAllEpisodes(subjectId: number): Promise<DisplayEpisode[
 
 export async function getHistorySubjects(): Promise<SubjectBrowse[]> {
   const today = new Date()
-  const todayMonth = today.getMonth() + 1
-  const todayDay = today.getDate()
-  const mm = String(todayMonth).padStart(2, '0')
+  const mm = String(today.getMonth() + 1).padStart(2, '0')
+  const dd = String(today.getDate()).padStart(2, '0')
 
-  // Load all cached years for today's month in parallel
+  // Try pre-generated cache first (instant)
+  const cached = await fetchLocalJSON<SubjectBrowse[]>(`history/${mm}-${dd}.json`)
+  if (cached) return cached
+
+  // Fallback: scan seasonal files
   const startYear = 2000
   const endYear = today.getFullYear()
   const promises: Promise<SubjectBrowse[] | null>[] = []
@@ -195,7 +198,7 @@ export async function getHistorySubjects(): Promise<SubjectBrowse[]> {
   }
   const results = await Promise.all(promises)
 
-  // Filter by exact day
+  const todayDay = today.getDate()
   const all: SubjectBrowse[] = []
   for (const data of results) {
     if (!data) continue
@@ -204,8 +207,7 @@ export async function getHistorySubjects(): Promise<SubjectBrowse[]> {
       if (!date) continue
       const parts = date.split('-')
       if (parts.length < 3) continue
-      const d = parseInt(parts[2], 10)
-      if (d === todayDay) all.push(subject)
+      if (parseInt(parts[2], 10) === todayDay) all.push(subject)
     }
   }
   return all
