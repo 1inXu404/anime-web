@@ -148,6 +148,15 @@ const navLinks = [
       >
         Bangumi
       </a>
+      <span class="mx-2 text-zinc-300 dark:text-zinc-600">·</span>
+      <a
+        href="https://github.com/1inXu404/anime-web"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="text-zinc-500 underline decoration-zinc-300 underline-offset-2 transition-all duration-200 hover:text-indigo-500 hover:decoration-indigo-400 dark:text-zinc-400"
+      >
+        项目主页
+      </a>
     </footer>
   </div>
 </template>
