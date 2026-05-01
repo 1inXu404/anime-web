@@ -13,9 +13,11 @@ const BGM_BASE = 'https://api.bgm.tv'
 
 // ─── Local JSON cache ───
 
+const BASE = import.meta.env.BASE_URL
+
 async function fetchLocalJSON<T>(filename: string): Promise<T | null> {
   try {
-    const res = await fetch(`/data/${filename}`)
+    const res = await fetch(`${BASE}data/${filename}`)
     if (!res.ok) return null
     return res.json()
   } catch {
@@ -104,24 +106,14 @@ export async function getCalendar(): Promise<CleanCalendarDay[]> {
 export async function getSubjects(
   year: number, month: number, limit = 50, offset = 0
 ): Promise<PagedSubjects> {
-  // Try local seasons index
   const local = await fetchLocalJSON<Record<string, SubjectBrowse[]>>('seasons-index.json')
   if (local) {
     const key = `${year}-${String(month).padStart(2, '0')}`
-    const data = local[key]
-    if (data) {
-      const slice = data.slice(offset, offset + limit)
-      return { data: slice, total: data.length, limit, offset }
-    }
-    return { data: [], total: 0, limit, offset }
+    const data = local[key] || []
+    const slice = data.slice(offset, offset + limit)
+    return { data: slice, total: data.length, limit, offset }
   }
-  // Fallback to API
-  const params = new URLSearchParams({
-    type: '2', sort: 'date',
-    year: String(year), month: String(month),
-    limit: String(limit), offset: String(offset),
-  })
-  return fetchJSON<PagedSubjects>(`${BGM_BASE}/v0/subjects?${params}`)
+  return { data: [], total: 0, limit, offset }
 }
 
 export async function getAllSubjects(year: number, month: number): Promise<SubjectBrowse[]> {
@@ -182,22 +174,24 @@ export async function getAllEpisodes(subjectId: number): Promise<DisplayEpisode[
 
 // ─── History ───
 
-export async function getHistorySubjects(): Promise<Record<number, Subject[]>> {
+export async function getHistorySubjects(): Promise<Subject[]> {
   const cache = await loadAnimeCache()
-  if (!cache) return {}
+  if (!cache) return []
   const today = new Date()
-  const mm = String(today.getMonth() + 1).padStart(2, '0')
-  const dd = String(today.getDate()).padStart(2, '0')
-  const todayMD = `${mm}-${dd}`
-  const result: Record<number, Subject[]> = {}
-  for (const [id, entry] of Object.entries(cache)) {
+  const todayMonth = today.getMonth() + 1
+  const todayDay = today.getDate()
+  const result: Subject[] = []
+  for (const [, entry] of Object.entries(cache)) {
     const date = entry.detail?.date
     if (!date) continue
-    // date format: "2025-05-01" — match month-day
-    if (date.slice(5) === todayMD) {
-      const year = parseInt(date.slice(0, 4))
-      if (!result[year]) result[year] = []
-      result[year].push(entry.detail)
+    // Parse date: handle "2025-05-01", "2025-5-1", "2025-05", etc.
+    const parts = date.split('-')
+    if (parts.length < 3) continue
+    const m = parseInt(parts[1], 10)
+    const d = parseInt(parts[2], 10)
+    if (d === 0) continue // unknown day
+    if (m === todayMonth && d === todayDay) {
+      result.push(entry.detail)
     }
   }
   return result

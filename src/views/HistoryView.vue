@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { getHistorySubjects } from '@/api/bangumi'
 import type { Subject } from '@/types/bangumi'
 import BentoGrid from '@/components/BentoGrid.vue'
@@ -10,15 +10,9 @@ import ErrorState from '@/components/ErrorState.vue'
 const today = new Date()
 const monthLabel = `${today.getMonth() + 1}月${today.getDate()}日`
 
-const history = ref<Record<number, Subject[]>>({})
+const history = ref<Subject[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
-
-const years = computed(() =>
-  Object.keys(history.value)
-    .map(Number)
-    .sort((a, b) => b - a)
-)
 
 async function fetchHistory() {
   loading.value = true
@@ -55,34 +49,29 @@ onMounted(fetchHistory)
 
       <ErrorState v-else-if="error" :message="error" :retry="fetchHistory" />
 
-      <div v-else-if="years.length === 0" class="flex flex-col items-center justify-center min-h-[40vh] gap-4">
+      <div v-else-if="history.length === 0" class="flex flex-col items-center justify-center min-h-[40vh] gap-4">
         <p class="text-zinc-500 dark:text-zinc-400">暂无历史数据</p>
       </div>
 
-      <div v-else class="space-y-12">
-        <section v-for="year in years" :key="year">
-          <div class="flex items-center gap-3 mb-4">
-            <span class="w-1 h-6 rounded-full bg-gradient-to-b from-amber-500 to-rose-500" />
-            <h2 class="text-xl font-bold text-zinc-800 dark:text-zinc-200">{{ year }} 年</h2>
-            <span class="bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full text-xs font-medium">
-              {{ history[year]?.length || 0 }} 部
-            </span>
-          </div>
-          <BentoGrid v-if="history[year]?.length">
-            <AnimeCard
-              v-for="anime in history[year]"
-              :key="anime.id"
-              :id="anime.id"
-              :title="anime.name_cn || anime.name"
-              :image="anime.images?.common"
-              :score="anime.rating?.score"
-              :air-date="anime.date"
-              :rank="anime.rating?.rank"
-              :episodes="anime.eps"
-            />
-          </BentoGrid>
-          <p v-else class="text-sm text-zinc-400 dark:text-zinc-500">暂无数据</p>
-        </section>
+      <div v-else>
+        <div class="flex items-center gap-3 mb-4">
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-rose-500 text-white text-xs font-semibold shadow-sm">
+            共 {{ history.length }} 部
+          </span>
+        </div>
+        <BentoGrid>
+          <AnimeCard
+            v-for="anime in history"
+            :key="anime.id"
+            :id="anime.id"
+            :title="anime.name_cn || anime.name"
+            :image="anime.images?.common"
+            :score="anime.rating?.score"
+            :air-date="anime.date"
+            :rank="anime.rating?.rank"
+            :episodes="anime.eps"
+          />
+        </BentoGrid>
       </div>
     </main>
   </div>
