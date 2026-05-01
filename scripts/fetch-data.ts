@@ -10,6 +10,8 @@ import * as path from 'path'
 const BGM = 'https://api.bgm.tv'
 const OUT_DIR = 'public/data'
 const SEASONS_DIR = path.join(OUT_DIR, 'seasons')
+const SUBJECTS_DIR = path.join(OUT_DIR, 'subjects')
+const SHARD_SIZE = 1000
 
 // ─── Helpers ───
 
@@ -46,6 +48,24 @@ function writeJSON(filePath: string, data: any) {
 
 function seasonKey(year: number, month: number) {
   return `${year}-${String(month).padStart(2, '0')}`
+}
+
+function shardFile(id: number): string {
+  const start = Math.floor(id / SHARD_SIZE) * SHARD_SIZE
+  return path.join(SUBJECTS_DIR, `${String(start).padStart(6, '0')}.json`)
+}
+
+function loadShard(id: number): Record<number, any> {
+  const fp = shardFile(id)
+  if (fs.existsSync(fp)) {
+    try { return JSON.parse(fs.readFileSync(fp, 'utf-8')) } catch {}
+  }
+  return {}
+}
+
+function saveShard(id: number, data: Record<number, any>) {
+  ensureDir(SUBJECTS_DIR)
+  writeJSON(shardFile(id), data)
 }
 
 // ─── Calendar ───
@@ -155,13 +175,21 @@ async function main() {
   }
   console.log(`  Total: ${totalMonths} months cached\n`)
 
-  // 3. Subject details — all anime, airing daily / completed once
-  console.log('[3/3] Subject details (all anime, smart caching)...')
-  const animePath = path.join(OUT_DIR, 'anime.json')
-  const cachedAnime: Record<number, any> = readJSON(animePath, {})
+  // 3. Subject details — sharded by ID range, smart caching
+  console.log('[3/3] Subject details (sharded, smart caching)...')
+  ensureDir(SUBJECTS_DIR)
   const curMonth = now.getMonth() + 1
   const curYear = now.getFullYear()
   const isFirstOfMonth = now.getDate() === 1
+
+  // Load ALL cached shard data to check what's already cached
+  const cachedAnime: Record<number, any> = {}
+  if (fs.existsSync(SUBJECTS_DIR)) {
+    for (const file of fs.readdirSync(SUBJECTS_DIR)) {
+      if (!file.endsWith('.json')) continue
+      Object.assign(cachedAnime, JSON.parse(fs.readFileSync(path.join(SUBJECTS_DIR, file), 'utf-8')))
+    }
+  }
 
   // Collect ALL subject IDs from ALL seasonal data
   const allIds = new Set<number>(calIds)
@@ -179,51 +207,48 @@ async function main() {
     airingMonths.add(seasonKey(y, mo))
   }
 
-  // Separate IDs: need fetch vs already cached
+  // Separate: need fetch vs already cached
   const toFetch: number[] = []
   let skipped = 0
   for (const id of allIds) {
     if (!cachedAnime[id]) {
-      toFetch.push(id) // Never cached
+      toFetch.push(id)
     } else if (isFirstOfMonth) {
-      toFetch.push(id) // Monthly full refresh
+      toFetch.push(id)
     } else {
-      // Check if this ID is from an airing month
       const detail = cachedAnime[id].detail
       if (detail?.date) {
         const parts = detail.date.split('-')
         if (parts.length >= 2) {
           const key = `${parts[0]}-${parts[1]}`
-          if (airingMonths.has(key)) {
-            toFetch.push(id) // Airing — needs update
-            continue
-          }
+          if (airingMonths.has(key)) { toFetch.push(id); continue }
         }
       }
       skipped++
     }
   }
 
-  console.log(`  ${toFetch.length} to fetch, ${skipped} skipped (completed), ${Object.keys(cachedAnime).length} in cache`)
+  console.log(`  ${toFetch.length} to fetch, ${skipped} skipped, ${Object.keys(cachedAnime).length} in cache`)
   let done = 0
+  // Track which shards were modified
+  const dirtyShards = new Set<string>()
   for (const id of toFetch) {
     try {
       const [detail, episodes] = await Promise.all([
         fetchSubjectDetail(id), fetchAllEpisodes(id),
       ])
-      cachedAnime[id] = { detail, episodes, updatedAt: new Date().toISOString() }
+      const shard = loadShard(id)
+      shard[id] = { detail, episodes, updatedAt: new Date().toISOString() }
+      saveShard(id, shard)
+      dirtyShards.add(shardFile(id))
       done++
-      if (done % 10 === 0) {
-        writeJSON(animePath, cachedAnime)
-        console.log(`  ${done}/${toFetch.length} (saved)`)
-      }
+      if (done % 10 === 0) console.log(`  ${done}/${toFetch.length}`)
       await sleep(300)
     } catch (e) {
       console.error(`  ✗ Subject ${id}:`, (e as Error).message)
     }
   }
-  writeJSON(animePath, cachedAnime)
-  console.log(`  ✓ anime.json (${Object.keys(cachedAnime).length} subjects)\n`)
+  console.log(`  ✓ ${Object.keys(cachedAnime).length + toFetch.length} subjects in ${dirtyShards.size} shards\n`)
 
   console.log('✅ Done!')
 }

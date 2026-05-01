@@ -25,13 +25,34 @@ async function fetchLocalJSON<T>(filename: string): Promise<T | null> {
   }
 }
 
-// Cache loaded once on first use
-let animeCache: Record<number, { detail: Subject; episodes: any[] }> | null = null
+// Sharded cache — loaded per ID range
+const SHARD_SIZE = 1000
+const loadedShards = new Map<number, Record<number, { detail: Subject; episodes: any[] }>>()
+
+function shardFile(id: number): string {
+  const start = Math.floor(id / SHARD_SIZE) * SHARD_SIZE
+  return `subjects/${String(start).padStart(6, '0')}.json`
+}
+
+async function loadAnimeEntry(id: number) {
+  // Check if shard is already loaded
+  const start = Math.floor(id / SHARD_SIZE) * SHARD_SIZE
+  if (loadedShards.has(start)) return loadedShards.get(start)![id] || null
+
+  // Load shard file
+  const data = await fetchLocalJSON<Record<number, { detail: Subject; episodes: any[] }>>(shardFile(id))
+  if (data) loadedShards.set(start, data)
+  return data?.[id] || null
+}
+
 async function loadAnimeCache() {
-  if (animeCache) return animeCache
-  const data = await fetchLocalJSON<Record<number, { detail: Subject; episodes: any[] }>>('anime.json')
-  animeCache = data
-  return animeCache
+  // For backwards compat: load all loaded shards into a single map
+  // Used by getHistorySubjects which needs to iterate all
+  const all: Record<number, { detail: Subject; episodes: any[] }> = {}
+  for (const [, shard] of loadedShards) {
+    Object.assign(all, shard)
+  }
+  return Object.keys(all).length > 0 ? all : null
 }
 
 // ─── Helpers ───
@@ -130,9 +151,9 @@ export async function getAllSubjects(year: number, month: number): Promise<Subje
 // ─── Subject Detail ───
 
 export async function getSubject(id: number): Promise<Subject> {
-  // Try local cache
-  const cache = await loadAnimeCache()
-  if (cache?.[id]?.detail) return cache[id].detail
+  // Try shard cache
+  const entry = await loadAnimeEntry(id)
+  if (entry?.detail) return entry.detail
   // Fallback to API
   return fetchJSON<Subject>(`${BGM_BASE}/v0/subjects/${id}`)
 }
@@ -140,10 +161,10 @@ export async function getSubject(id: number): Promise<Subject> {
 // ─── Episodes ───
 
 export async function getAllEpisodes(subjectId: number): Promise<DisplayEpisode[]> {
-  // Try local cache
-  const cache = await loadAnimeCache()
-  if (cache?.[subjectId]?.episodes) {
-    return cache[subjectId].episodes
+  // Try shard cache
+  const entry = await loadAnimeEntry(subjectId)
+  if (entry?.episodes) {
+    return entry.episodes
       .filter((ep: any) => ep.type === 0)
       .map((ep: any): DisplayEpisode => ({
         id: ep.id, sort: ep.sort,
