@@ -2,13 +2,10 @@
 import { ref, computed, onMounted } from 'vue'
 import { getHistorySubjects } from '@/api/bangumi'
 import type { SubjectBrowse } from '@/types/bangumi'
-import { useContentFilter } from '@/composables/useContentFilter'
 import BentoGrid from '@/components/BentoGrid.vue'
 import AnimeCard from '@/components/AnimeCard.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import ErrorState from '@/components/ErrorState.vue'
-
-const { showR18 } = useContentFilter()
 
 const today = new Date()
 const monthLabel = `${today.getMonth() + 1}月${today.getDate()}日`
@@ -17,11 +14,9 @@ const historyRaw = ref<SubjectBrowse[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
 
-const history = computed(() =>
-  showR18.value
-    ? historyRaw.value
-    : historyRaw.value.filter(a => !a.tags?.some(t => t.name === '里番'))
-)
+// Hardcoded content filter
+const isR18 = (a: SubjectBrowse) => a.tags?.some(t => t.name.includes('里番'))
+const history = computed(() => historyRaw.value.filter(a => !isR18(a)))
 
 async function fetchHistory() {
   loading.value = true

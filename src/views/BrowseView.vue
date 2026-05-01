@@ -2,14 +2,11 @@
 import { ref, computed, watch } from 'vue'
 import { getAllSubjects } from '@/api/bangumi'
 import type { SubjectBrowse } from '@/types/bangumi'
-import { useContentFilter } from '@/composables/useContentFilter'
 import BentoGrid from '@/components/BentoGrid.vue'
 import AnimeCard from '@/components/AnimeCard.vue'
 import YearMonthPicker from '@/components/YearMonthPicker.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import ErrorState from '@/components/ErrorState.vue'
-
-const { showR18 } = useContentFilter()
 
 const now = new Date()
 const year = ref(now.getFullYear())
@@ -19,11 +16,10 @@ const animeList = ref<SubjectBrowse[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
 
-const filteredList = computed(() =>
-  showR18.value
-    ? animeList.value
-    : animeList.value.filter(a => !a.tags?.some(t => t.name === '里番'))
-)
+// Hardcoded content filter: hide anime with tags containing "里番"
+const isR18 = (a: SubjectBrowse) => a.tags?.some(t => t.name.includes('里番'))
+
+const filteredList = computed(() => animeList.value.filter(a => !isR18(a)))
 
 async function fetchAnime() {
   loading.value = true

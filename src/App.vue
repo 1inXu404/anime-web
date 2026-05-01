@@ -2,11 +2,9 @@
 import { ref, computed } from 'vue'
 import { RouterView, RouterLink, useRoute } from 'vue-router'
 import { useTheme } from '@/composables/useTheme'
-import { useContentFilter } from '@/composables/useContentFilter'
 
 const route = useRoute()
 const { isDark, toggleTheme } = useTheme()
-const { showR18, toggleR18 } = useContentFilter()
 const currentRouteName = computed(() => route.name as string)
 
 const mobileMenuOpen = ref(false)
@@ -72,16 +70,6 @@ const navLinks = [
           <svg v-else class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
           </svg>
-        </button>
-
-        <!-- R18 Toggle -->
-        <button
-          class="inline-flex items-center justify-center rounded-lg px-2 py-1.5 text-xs font-medium transition-all duration-200"
-          :class="showR18 ? 'bg-rose-50 text-rose-600 dark:bg-rose-950 dark:text-rose-400' : 'text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300'"
-          @click="toggleR18"
-          title="切换里番内容显示"
-        >
-          R18
         </button>
 
         <!-- Mobile Hamburger Button -->
