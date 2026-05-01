@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 const props = withDefaults(
   defineProps<{
@@ -22,16 +22,16 @@ const props = withDefaults(
   },
 )
 
+const imageLoaded = ref(false)
+
 const placeholderBg = computed(() => {
   const colors = [
-    'bg-gradient-to-br from-rose-400 to-rose-500',
-    'bg-gradient-to-br from-amber-400 to-amber-500',
-    'bg-gradient-to-br from-emerald-400 to-emerald-500',
-    'bg-gradient-to-br from-sky-400 to-sky-500',
-    'bg-gradient-to-br from-violet-400 to-violet-500',
-    'bg-gradient-to-br from-pink-400 to-pink-500',
-    'bg-gradient-to-br from-teal-400 to-teal-500',
-    'bg-gradient-to-br from-orange-400 to-orange-500',
+    'bg-rose-400',    'bg-amber-400',   'bg-emerald-400',
+    'bg-sky-400',     'bg-violet-400',  'bg-pink-400',
+    'bg-teal-400',    'bg-orange-400',  'bg-indigo-400',
+    'bg-lime-400',    'bg-cyan-400',    'bg-fuchsia-400',
+    'bg-red-400',     'bg-yellow-400',  'bg-green-400',
+    'bg-blue-400',
   ]
   const index = props.title.charCodeAt(0) % colors.length
   return colors[index]
@@ -59,22 +59,23 @@ const formattedDate = computed(() => {
   >
     <!-- Image Section -->
     <div class="relative aspect-[3/4] overflow-hidden bg-zinc-100 dark:bg-zinc-800">
+      <!-- Always show colored placeholder first -->
+      <div class="absolute inset-0 flex items-center justify-center" :class="placeholderBg">
+        <span class="text-white/80 text-4xl font-bold select-none">{{ initial }}</span>
+      </div>
+      <!-- Image loads on top of placeholder -->
       <img
         v-if="image"
         :src="image"
         :alt="title"
-        class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+        class="absolute inset-0 w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
+        :class="imageLoaded ? 'opacity-100' : 'opacity-0'"
         loading="lazy"
         decoding="async"
         fetchpriority="low"
+        @load="imageLoaded = true"
+        @error="imageLoaded = false"
       />
-      <div
-        v-else
-        class="w-full h-full flex items-center justify-center"
-        :class="placeholderBg"
-      >
-        <span class="text-white text-4xl font-bold select-none pointer-events-none">{{ initial }}</span>
-      </div>
 
       <!-- Gradient Overlay -->
       <div
