@@ -187,7 +187,7 @@ export async function getHistorySubjects(): Promise<SubjectBrowse[]> {
 
   // Try pre-generated cache first (instant)
   const cached = await fetchLocalJSON<SubjectBrowse[]>(`history/${mm}-${dd}.json`)
-  if (cached) return cached
+  if (cached && cached.length > 0) return cached
 
   // Fallback: scan seasonal files
   const startYear = 2000
