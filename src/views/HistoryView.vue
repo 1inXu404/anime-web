@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { getHistorySubjects } from '@/api/bangumi'
-import type { Subject } from '@/types/bangumi'
+import type { SubjectBrowse } from '@/types/bangumi'
 import BentoGrid from '@/components/BentoGrid.vue'
 import AnimeCard from '@/components/AnimeCard.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
@@ -10,7 +10,7 @@ import ErrorState from '@/components/ErrorState.vue'
 const today = new Date()
 const monthLabel = `${today.getMonth() + 1}月${today.getDate()}日`
 
-const history = ref<Subject[]>([])
+const history = ref<SubjectBrowse[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
 

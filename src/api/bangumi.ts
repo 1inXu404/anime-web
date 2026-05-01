@@ -180,25 +180,33 @@ export async function getAllEpisodes(subjectId: number): Promise<DisplayEpisode[
 
 // ─── History ───
 
-export async function getHistorySubjects(): Promise<Subject[]> {
-  const cache = await loadAnimeCache()
-  if (!cache) return []
+export async function getHistorySubjects(): Promise<SubjectBrowse[]> {
   const today = new Date()
   const todayMonth = today.getMonth() + 1
   const todayDay = today.getDate()
-  const result: Subject[] = []
-  for (const [, entry] of Object.entries(cache)) {
-    const date = entry.detail?.date
-    if (!date) continue
-    // Parse date: handle "2025-05-01", "2025-5-1", "2025-05", etc.
-    const parts = date.split('-')
-    if (parts.length < 3) continue
-    const m = parseInt(parts[1], 10)
-    const d = parseInt(parts[2], 10)
-    if (d === 0) continue // unknown day
-    if (m === todayMonth && d === todayDay) {
-      result.push(entry.detail)
+  const mm = String(todayMonth).padStart(2, '0')
+
+  // Load all cached years for today's month in parallel
+  const startYear = 2000
+  const endYear = today.getFullYear()
+  const promises: Promise<SubjectBrowse[] | null>[] = []
+  for (let y = startYear; y <= endYear; y++) {
+    promises.push(fetchLocalJSON<SubjectBrowse[]>(`seasons/${y}-${mm}.json`))
+  }
+  const results = await Promise.all(promises)
+
+  // Filter by exact day
+  const all: SubjectBrowse[] = []
+  for (const data of results) {
+    if (!data) continue
+    for (const subject of data) {
+      const date = subject.date
+      if (!date) continue
+      const parts = date.split('-')
+      if (parts.length < 3) continue
+      const d = parseInt(parts[2], 10)
+      if (d === todayDay) all.push(subject)
     }
   }
-  return result
+  return all
 }
