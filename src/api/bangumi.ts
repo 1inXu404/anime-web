@@ -106,15 +106,14 @@ export async function getCalendar(): Promise<CleanCalendarDay[]> {
 export async function getSubjects(
   year: number, month: number, limit = 50, offset = 0
 ): Promise<PagedSubjects> {
-  // Try local cache first
-  const local = await fetchLocalJSON<Record<string, SubjectBrowse[]>>('seasons-index.json')
+  // Try per-month cache file first
   const key = `${year}-${String(month).padStart(2, '0')}`
-  if (local?.[key]) {
-    const data = local[key]
-    const slice = data.slice(offset, offset + limit)
-    return { data: slice, total: data.length, limit, offset }
+  const local = await fetchLocalJSON<SubjectBrowse[]>(`seasons/${key}.json`)
+  if (local) {
+    const slice = local.slice(offset, offset + limit)
+    return { data: slice, total: local.length, limit, offset }
   }
-  // Fallback to API for uncached months
+  // Fallback to API
   const params = new URLSearchParams({
     type: '2', sort: 'date',
     year: String(year), month: String(month),
