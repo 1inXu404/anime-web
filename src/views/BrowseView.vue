@@ -16,10 +16,13 @@ const animeList = ref<SubjectBrowse[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
 
-// Hardcoded content filter: hide anime with tags containing "里番"
-const isR18 = (a: SubjectBrowse) => a.tags?.some(t => t.name.includes('里番'))
+// Hardcoded content filter
+const isBlocked = (a: SubjectBrowse) =>
+  a.tags?.some(t => t.name.includes('里番')) ||
+  a.name_cn?.includes('我的英雄学院') ||
+  a.name?.includes('我的英雄学院')
 
-const filteredList = computed(() => animeList.value.filter(a => !isR18(a)))
+const filteredList = computed(() => animeList.value.filter(a => !isBlocked(a)))
 
 async function fetchAnime() {
   loading.value = true

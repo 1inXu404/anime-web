@@ -15,8 +15,11 @@ const loading = ref(true)
 const error = ref<string | null>(null)
 
 // Hardcoded content filter
-const isR18 = (a: SubjectBrowse) => a.tags?.some(t => t.name.includes('里番'))
-const history = computed(() => historyRaw.value.filter(a => !isR18(a)))
+const isBlocked = (a: SubjectBrowse) =>
+  a.tags?.some(t => t.name.includes('里番')) ||
+  a.name_cn?.includes('我的英雄学院') ||
+  a.name?.includes('我的英雄学院')
+const history = computed(() => historyRaw.value.filter(a => !isBlocked(a)))
 
 async function fetchHistory() {
   loading.value = true
