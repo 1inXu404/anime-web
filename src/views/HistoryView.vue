@@ -1,17 +1,16 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { getHistorySubjects } from '@/api/bangumi'
-import type { SubjectBrowse } from '@/types/bangumi'
+import type { Subject } from '@/types/bangumi'
 import BentoGrid from '@/components/BentoGrid.vue'
 import AnimeCard from '@/components/AnimeCard.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import ErrorState from '@/components/ErrorState.vue'
 
 const today = new Date()
-const month = today.getMonth() + 1
-const monthLabel = `${month}月${today.getDate()}日`
+const monthLabel = `${today.getMonth() + 1}月${today.getDate()}日`
 
-const history = ref<Record<number, SubjectBrowse[]>>({})
+const history = ref<Record<number, Subject[]>>({})
 const loading = ref(true)
 const error = ref<string | null>(null)
 
@@ -25,7 +24,7 @@ async function fetchHistory() {
   loading.value = true
   error.value = null
   try {
-    history.value = await getHistorySubjects(month)
+    history.value = await getHistorySubjects()
   } catch (e) {
     error.value = e instanceof Error ? e.message : '获取历史数据失败'
   } finally {

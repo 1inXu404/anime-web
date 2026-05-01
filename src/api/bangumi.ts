@@ -182,21 +182,23 @@ export async function getAllEpisodes(subjectId: number): Promise<DisplayEpisode[
 
 // ─── History ───
 
-export async function getHistorySubjects(month: number): Promise<Record<number, SubjectBrowse[]>> {
-  // Try local cache
-  const local = await fetchLocalJSON<Record<number, SubjectBrowse[]>>('history.json')
-  if (local) return local
-  // Fallback: minimal API fetch
-  const result: Record<number, SubjectBrowse[]> = {}
-  const now = new Date()
-  for (let y = now.getFullYear() - 1; y >= now.getFullYear() - 5; y--) {
-    const params = new URLSearchParams({
-      type: '2', sort: 'date',
-      year: String(y), month: String(month),
-      limit: '100', offset: '0',
-    })
-    const data = await fetchJSON<PagedSubjects>(`${BGM_BASE}/v0/subjects?${params}`)
-    result[y] = data.data || []
+export async function getHistorySubjects(): Promise<Record<number, Subject[]>> {
+  const cache = await loadAnimeCache()
+  if (!cache) return {}
+  const today = new Date()
+  const mm = String(today.getMonth() + 1).padStart(2, '0')
+  const dd = String(today.getDate()).padStart(2, '0')
+  const todayMD = `${mm}-${dd}`
+  const result: Record<number, Subject[]> = {}
+  for (const [id, entry] of Object.entries(cache)) {
+    const date = entry.detail?.date
+    if (!date) continue
+    // date format: "2025-05-01" — match month-day
+    if (date.slice(5) === todayMD) {
+      const year = parseInt(date.slice(0, 4))
+      if (!result[year]) result[year] = []
+      result[year].push(entry.detail)
+    }
   }
   return result
 }

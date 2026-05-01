@@ -155,21 +155,8 @@ async function main() {
   }
   console.log(`  Fetched ${done}/${ids.length} subjects\n`)
 
-  // 4. History data (past 5 years, today's month)
-  console.log('[4/5] History data...')
-  const today = new Date()
-  const historyMonth = today.getMonth() + 1
-  const historyData: Record<number, any[]> = {}
-  for (let y = today.getFullYear() - 1; y >= today.getFullYear() - 5; y--) {
-    console.log(`  ${y}-${String(historyMonth).padStart(2, '0')}...`)
-    const subjects = await fetchAllSubjects(y, historyMonth)
-    historyData[y] = subjects
-    await sleep(300)
-  }
-  console.log(`  Fetched ${Object.keys(historyData).length} years\n`)
-
-  // 5. Write files
-  console.log('[5/5] Writing files...')
+  // 4. Write files
+  console.log('[4/4] Writing files...')
   const fs = await import('fs')
   const path = await import('path')
 
@@ -196,13 +183,6 @@ async function main() {
     JSON.stringify(seasonsMap)
   )
   console.log(`  ✓ seasons-index.json (${Object.keys(seasonsMap).length} months)`)
-
-  // History data
-  fs.writeFileSync(
-    path.join(OUT_DIR, 'history.json'),
-    JSON.stringify(historyData)
-  )
-  console.log(`  ✓ history.json (${Object.keys(historyData).length} years)`)
 
   console.log('\n✅ Done! Data saved to public/data/')
 }
