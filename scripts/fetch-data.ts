@@ -118,13 +118,14 @@ async function main() {
   }
   console.log(`  Got ${calendar.length} days, ${subjectIds.size} unique subjects\n`)
 
-  // 2. Seasonal subjects (current year ±2 months)
+  // 2. Seasonal subjects (full current year + next spring)
   console.log('[2/4] Seasonal subjects...')
   const now = new Date()
   const seasonsMap: Record<string, any[]> = {}
-  for (let m = now.getMonth() - 1; m <= now.getMonth() + 3; m++) {
+  // Jan of current year through Mar of next year
+  for (let m = 0; m <= now.getMonth() + 10; m++) {
     const year = now.getFullYear() + Math.floor(m / 12)
-    const month = ((m % 12) + 12) % 12 + 1
+    const month = (m % 12) + 1
     const key = `${year}-${String(month).padStart(2, '0')}`
     console.log(`  ${key}...`)
     const subjects = await fetchAllSubjects(year, month)
