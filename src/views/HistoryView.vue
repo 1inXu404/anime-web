@@ -46,7 +46,7 @@ onMounted(fetchHistory)
           历史上的今天
         </h1>
         <p class="mt-3 text-lg sm:text-xl text-white/85">
-          {{ monthLabel }} · 往年今日播出的番剧
+          {{ monthLabel }} · 往年今日播出的作品
         </p>
       </div>
     </header>

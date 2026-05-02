@@ -105,7 +105,7 @@ function formattedDate(dateStr: string): string {
           今日看啥
         </h1>
         <p class="mt-3 text-lg sm:text-xl text-white/85">
-          从 17,589 部作品中为你推荐一部
+          从 21,882 部作品中为你推荐一部
         </p>
       </div>
     </header>
