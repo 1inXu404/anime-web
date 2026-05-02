@@ -365,3 +365,15 @@ export async function getRandomSubject(excludeIds?: Set<number>): Promise<Subjec
 
   return null
 }
+
+// ─── Seasons manifest ───
+
+let manifestCache: Record<string, number[]> | null = null
+
+export async function getAvailableMonths(year: number): Promise<number[]> {
+  if (!manifestCache) {
+    const data = await fetchLocalJSON<Record<string, number[]>>('seasons-manifest.json')
+    manifestCache = data || {}
+  }
+  return manifestCache[String(year)] || []
+}

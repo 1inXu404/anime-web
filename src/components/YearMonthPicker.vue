@@ -5,10 +5,12 @@ const props = withDefaults(
   defineProps<{
     modelYear?: number
     modelMonth?: number
+    availableMonths?: number[]
   }>(),
   {
     modelYear: () => new Date().getFullYear(),
     modelMonth: () => new Date().getMonth() + 1,
+    availableMonths: () => [],
   },
 )
 
@@ -45,8 +47,14 @@ function nextYear() {
 }
 
 function selectMonth(month: number) {
+  if (!isMonthAvailable(month)) return
   selectedMonth.value = month
   emitChange()
+}
+
+function isMonthAvailable(m: number): boolean {
+  if (!props.availableMonths || props.availableMonths.length === 0) return true
+  return props.availableMonths.includes(m)
 }
 
 function emitChange() {
@@ -169,11 +177,14 @@ onUnmounted(() => {
         v-for="(label, i) in months"
         :key="i"
         class="inline-flex items-center justify-center h-9 rounded-lg text-sm font-medium transition-colors duration-150"
-        :class="
+        :class="[
           selectedMonth === i + 1
             ? 'bg-zinc-900 text-white shadow-sm dark:bg-white dark:text-zinc-900'
-            : 'bg-white border border-zinc-200 text-zinc-600 hover:border-zinc-400 hover:text-zinc-800 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-zinc-500 dark:hover:text-zinc-200'
-        "
+            : isMonthAvailable(i + 1)
+              ? 'bg-white border border-zinc-200 text-zinc-600 hover:border-zinc-400 hover:text-zinc-800 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-zinc-500 dark:hover:text-zinc-200'
+              : 'bg-zinc-50 text-zinc-300 cursor-not-allowed dark:bg-zinc-800/50 dark:text-zinc-600',
+        ]"
+        :disabled="!isMonthAvailable(i + 1)"
         @click="selectMonth(i + 1)"
       >
         {{ label }}

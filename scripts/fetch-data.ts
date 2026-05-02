@@ -269,6 +269,20 @@ async function main() {
   })
   console.log(`  ✓ stats.json (${allUnique.size} seasonal, ${withDetail} with details)\n`)
 
+  // Generate seasons manifest — available months per year
+  const manifest: Record<string, number[]> = {}
+  for (const file of seasonFiles) {
+    const m = file.match(/^(\d{4})-(\d{2})\.json$/)
+    if (!m) continue
+    const y = m[1]
+    const mo = parseInt(m[2], 10)
+    if (!manifest[y]) manifest[y] = []
+    manifest[y].push(mo)
+  }
+  for (const y of Object.keys(manifest)) manifest[y].sort((a, b) => a - b)
+  writeJSON(path.join(OUT_DIR, 'seasons-manifest.json'), manifest)
+  console.log(`  ✓ seasons-manifest.json (${Object.keys(manifest).length} years)\n`)
+
   console.log('✅ Done!')
 }
 

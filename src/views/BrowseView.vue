@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { getAllSubjects } from '@/api/bangumi'
+import { getAllSubjects, getAvailableMonths } from '@/api/bangumi'
 import type { SubjectBrowse } from '@/types/bangumi'
 import BentoGrid from '@/components/BentoGrid.vue'
 import AnimeCard from '@/components/AnimeCard.vue'
@@ -15,6 +15,7 @@ const month = ref(now.getMonth() + 1)
 const animeList = ref<SubjectBrowse[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
+const availableMonths = ref<number[]>([])
 
 // Hardcoded content filter
 const isBlocked = (a: SubjectBrowse) =>
@@ -41,11 +42,20 @@ async function fetchAnime() {
   }
 }
 
+async function loadAvailableMonths() {
+  availableMonths.value = await getAvailableMonths(year.value)
+  // Auto-select first available month if current is unavailable
+  if (availableMonths.value.length > 0 && !availableMonths.value.includes(month.value)) {
+    month.value = availableMonths.value[0]
+  }
+}
+
 function onPickerChange(payload: { year: number; month: number }) {
   year.value = payload.year
   month.value = payload.month
 }
 
+watch(year, loadAvailableMonths, { immediate: true })
 watch([year, month], fetchAnime, { immediate: true })
 </script>
 
@@ -67,6 +77,7 @@ watch([year, month], fetchAnime, { immediate: true })
         <YearMonthPicker
           :model-year="year"
           :model-month="month"
+          :available-months="availableMonths"
           @change="onPickerChange"
         />
       </div>
