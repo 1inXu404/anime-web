@@ -27,6 +27,12 @@ const maxYear = currentYear + 1
 const selectedYear = ref(props.modelYear)
 const selectedMonth = ref(props.modelMonth)
 
+const months = [
+  '1月', '2月', '3月', '4月',
+  '5月', '6月', '7月', '8月',
+  '9月', '10月', '11月', '12月',
+]
+
 const canGoPrev = computed(() => selectedYear.value > minYear)
 const canGoNext = computed(() => selectedYear.value < maxYear)
 
@@ -60,10 +66,11 @@ function emitChange() {
 const yearDropdownOpen = ref(false)
 const dropdownContainerRef = ref<HTMLElement | null>(null)
 
-const yearList = computed(() => {
-  if (props.availableYears.length > 0) return props.availableYears
-  return Array.from({ length: maxYear - minYear + 1 }, (_, i) => minYear + i)
-})
+const yearList = computed(() =>
+  props.availableYears && props.availableYears.length > 0
+    ? props.availableYears
+    : Array.from({ length: maxYear - minYear + 1 }, (_, i) => minYear + i),
+)
 
 function selectYear(y: number) {
   selectedYear.value = y
