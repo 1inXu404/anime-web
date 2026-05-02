@@ -151,7 +151,18 @@ export async function getAllSubjects(year: number, month: number): Promise<Subje
 
 export async function getSubject(id: number): Promise<Subject> {
   const entry = await loadAnimeEntry(id)
-  if (entry?.detail) return entry.detail
+  if (entry?.detail) {
+    // Archive data lacks images — fetch from API if missing
+    if (!entry.detail.images) {
+      try {
+        const apiData = await fetchJSON<Subject>(`${BGM_BASE}/v0/subjects/${id}`)
+        if (apiData.images) {
+          entry.detail.images = apiData.images
+        }
+      } catch { /* keep using data without images */ }
+    }
+    return entry.detail
+  }
   throw new Error(`找不到 ID ${id} 的番剧详情`)
 }
 
