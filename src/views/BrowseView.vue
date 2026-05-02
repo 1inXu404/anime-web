@@ -22,7 +22,11 @@ const isBlocked = (a: SubjectBrowse) =>
   a.name_cn?.includes('我的英雄学院') ||
   a.name?.includes('我的英雄学院')
 
-const filteredList = computed(() => animeList.value.filter(a => !isBlocked(a)))
+const filteredList = computed(() =>
+  animeList.value
+    .filter(a => !isBlocked(a))
+    .sort((a, b) => (a.date || '').localeCompare(b.date || ''))
+)
 
 async function fetchAnime() {
   loading.value = true
