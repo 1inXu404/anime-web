@@ -33,18 +33,41 @@ const months = [
   '9月', '10月', '11月', '12月',
 ]
 
-const canGoPrev = computed(() => selectedYear.value > minYear)
-const canGoNext = computed(() => selectedYear.value < maxYear)
+const yearIndex = computed(() => {
+  if (props.availableYears && props.availableYears.length > 0)
+    return props.availableYears.indexOf(selectedYear.value)
+  return -1
+})
+
+const canGoPrev = computed(() =>
+  props.availableYears && props.availableYears.length > 0
+    ? yearIndex.value > 0
+    : selectedYear.value > minYear,
+)
+
+const canGoNext = computed(() =>
+  props.availableYears && props.availableYears.length > 0
+    ? yearIndex.value >= 0 && yearIndex.value < props.availableYears.length - 1
+    : selectedYear.value < maxYear,
+)
 
 function prevYear() {
   if (!canGoPrev.value) return
-  selectedYear.value--
+  if (props.availableYears && props.availableYears.length > 0 && yearIndex.value > 0) {
+    selectedYear.value = props.availableYears[yearIndex.value - 1]
+  } else {
+    selectedYear.value--
+  }
   emitChange()
 }
 
 function nextYear() {
   if (!canGoNext.value) return
-  selectedYear.value++
+  if (props.availableYears && props.availableYears.length > 0 && yearIndex.value >= 0 && yearIndex.value < props.availableYears.length - 1) {
+    selectedYear.value = props.availableYears[yearIndex.value + 1]
+  } else {
+    selectedYear.value++
+  }
   emitChange()
 }
 
