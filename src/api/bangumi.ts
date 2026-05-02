@@ -217,7 +217,7 @@ export async function getHistorySubjects(): Promise<SubjectBrowse[]> {
   if (cached && cached.length > 0) return cached
 
   // Fallback: scan seasonal files
-  const startYear = 2000
+  const startYear = 1921
   const endYear = today.getFullYear()
   const promises: Promise<SubjectBrowse[] | null>[] = []
   for (let y = startYear; y <= endYear; y++) {

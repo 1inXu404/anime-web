@@ -147,7 +147,7 @@ async function main() {
   // 2. Seasonal subjects per month — save to individual files
   console.log('[2/3] Seasonal subjects (2000 ~ present)...')
   const now = new Date()
-  const startYear = 2000
+  const startYear = 1921
   const endYear = now.getFullYear() + 2
   let totalMonths = 0
 
