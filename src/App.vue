@@ -16,7 +16,7 @@ onMounted(async () => {
     const res = await fetch(`${BASE}data/stats.json`)
     if (res.ok) {
       const data = await res.json()
-      totalSubjects.value = data.totalSubjects
+      totalSubjects.value = data.withDetail
     }
   } catch {}
 })
