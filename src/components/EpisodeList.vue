@@ -42,6 +42,7 @@ defineProps<{
         <!-- Title -->
         <span class="text-sm text-zinc-800 dark:text-zinc-100 leading-snug pr-2 truncate">
           {{ ep.name_cn || ep.name || '暂无' }}
+        </span>
 
         <!-- Air date -->
         <span class="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 text-right tabular-nums truncate">
