@@ -24,37 +24,21 @@ const currentYear = new Date().getFullYear()
 const minYear = 1892
 const maxYear = currentYear + 1
 
-const yearIndex = computed(() => {
-  if (props.availableYears.length > 0) return props.availableYears.indexOf(selectedYear.value)
-  return selectedYear.value - minYear
-})
+const selectedYear = ref(props.modelYear)
+const selectedMonth = ref(props.modelMonth)
 
-const canGoPrev = computed(() => {
-  if (props.availableYears.length > 0) return yearIndex.value > 0
-  return selectedYear.value > minYear
-})
-const canGoNext = computed(() => {
-  if (props.availableYears.length > 0) return yearIndex.value < props.availableYears.length - 1
-  return selectedYear.value < maxYear
-})
+const canGoPrev = computed(() => selectedYear.value > minYear)
+const canGoNext = computed(() => selectedYear.value < maxYear)
 
 function prevYear() {
   if (!canGoPrev.value) return
-  if (props.availableYears.length > 0) {
-    selectedYear.value = props.availableYears[yearIndex.value - 1]
-  } else {
-    selectedYear.value--
-  }
+  selectedYear.value--
   emitChange()
 }
 
 function nextYear() {
   if (!canGoNext.value) return
-  if (props.availableYears.length > 0) {
-    selectedYear.value = props.availableYears[yearIndex.value + 1]
-  } else {
-    selectedYear.value++
-  }
+  selectedYear.value++
   emitChange()
 }
 
