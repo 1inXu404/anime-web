@@ -30,6 +30,11 @@ const router = createRouter({
       component: () => import('@/views/SearchView.vue'),
       props: (route) => ({ q: (route.query.q as string) || '' }),
     },
+    {
+      path: '/random',
+      name: 'random',
+      component: () => import('@/views/RandomView.vue'),
+    },
   ],
   scrollBehavior(to, from, savedPosition) {
     if (savedPosition) {

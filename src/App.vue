@@ -43,6 +43,7 @@ const navLinks = [
   { name: 'home', label: '追番日历', to: '/' },
   { name: 'browse', label: '番剧浏览', to: '/browse' },
   { name: 'history', label: '历史上的今天', to: '/history' },
+  { name: 'random', label: '今日看啥', to: '/random' },
 ]
 </script>
 

@@ -260,3 +260,109 @@ export async function searchSubjects(keyword: string, limit = 30): Promise<Paged
     clearTimeout(timeout)
   }
 }
+
+// ─── Random ───
+
+function isBlocked(detail: Subject): boolean {
+  if (detail.tags?.some((t) => t.name.includes('里番'))) return true
+  if (detail.name_cn?.includes('我的英雄学院')) return true
+  if (detail.name?.includes('我的英雄学院')) return true
+  return false
+}
+
+function todayStr(): string {
+  const now = new Date()
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+}
+
+function isEligible(detail: Subject): boolean {
+  if (!detail.date) return false
+  if (detail.date >= todayStr()) return false
+  if (isBlocked(detail)) return false
+  return true
+}
+
+function subjectToBrowse(detail: Subject): SubjectBrowse {
+  return {
+    id: detail.id,
+    type: detail.type,
+    name: detail.name,
+    name_cn: detail.name_cn || '',
+    summary: detail.summary || '',
+    date: detail.date,
+    images: detail.images,
+    rating: detail.rating,
+    tags: detail.tags,
+    eps: detail.eps || detail.total_episodes || 0,
+    collection: detail.collection,
+  }
+}
+
+const MAX_SHARD = 646_000
+const MAX_INDEX = Math.floor(MAX_SHARD / SHARD_SIZE)
+
+function randomShardStart(tried: Set<number>): number {
+  let start: number
+  do {
+    start = Math.floor(Math.random() * (MAX_INDEX + 1)) * SHARD_SIZE
+  } while (tried.has(start))
+  return start
+}
+
+async function loadShard(start: number) {
+  const filename = `subjects/${String(start).padStart(6, '0')}.json`
+  return fetchLocalJSON<Record<number, { detail: Subject; episodes: any[] }>>(filename)
+}
+
+/** Preload N real titles from random shards — used for animation cycling */
+export async function getRandomTitles(count: number): Promise<string[]> {
+  const titles = new Set<string>()
+  const tried = new Set<number>()
+
+  for (let i = 0; i < 10 && titles.size < count; i++) {
+    const start = randomShardStart(tried)
+    tried.add(start)
+    const data = await loadShard(start)
+    if (!data) continue
+
+    for (const entry of Object.values(data)) {
+      const name = entry.detail?.name_cn || entry.detail?.name
+      if (name) titles.add(name)
+      if (titles.size >= count) break
+    }
+  }
+
+  return [...titles]
+}
+
+/**
+ * Randomly pick one eligible subject from sharded cache.
+ * Collects from multiple shards before picking to ensure diversity.
+ * @param excludeIds IDs to skip (for no-repeat draws in same session)
+ */
+export async function getRandomSubject(excludeIds?: Set<number>): Promise<SubjectBrowse | null> {
+  const tried = new Set<number>()
+  const collected: Subject[] = []
+
+  // Scan multiple shards to build a diverse pool
+  for (let i = 0; i < 15; i++) {
+    const start = randomShardStart(tried)
+    tried.add(start)
+    const data = await loadShard(start)
+    if (!data) continue
+
+    for (const entry of Object.values(data)) {
+      const d = entry.detail
+      if (!isEligible(d)) continue
+      if (excludeIds?.has(d.id)) continue
+      collected.push(d)
+    }
+
+    if (collected.length >= 30) break // enough candidates
+  }
+
+  if (collected.length === 0) return null
+
+  const chosen = collected[Math.floor(Math.random() * collected.length)]
+  return subjectToBrowse(chosen)
+}
