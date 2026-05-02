@@ -150,7 +150,7 @@ export async function getSubjects(
 }
 
 export async function getAllSubjects(year: number, month: number): Promise<SubjectBrowse[]> {
-  const data = await getSubjects(year, month, 200)
+  const data = await getSubjects(year, month, 100)
   return data.data
 }
 
