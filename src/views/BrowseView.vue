@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { getAllSubjects, getAvailableMonths } from '@/api/bangumi'
 import type { SubjectBrowse } from '@/types/bangumi'
 import BentoGrid from '@/components/BentoGrid.vue'
@@ -52,14 +52,14 @@ async function loadAvailableMonths() {
 }
 
 // Load available years from manifest (once)
-import.meta.env.BASE_URL
-const BASE = import.meta.env.BASE_URL
-fetch(`${BASE}data/seasons-manifest.json`)
-  .then(r => r.json())
-  .then((manifest: Record<string, number[]>) => {
+onMounted(async () => {
+  try {
+    const BASE = import.meta.env.BASE_URL
+    const res = await fetch(`${BASE}data/seasons-manifest.json`)
+    const manifest: Record<string, number[]> = await res.json()
     availableYears.value = Object.keys(manifest).map(Number).sort((a, b) => a - b)
-  })
-  .catch(() => {})
+  } catch {}
+})
 
 function onPickerChange(payload: { year: number; month: number }) {
   year.value = payload.year
