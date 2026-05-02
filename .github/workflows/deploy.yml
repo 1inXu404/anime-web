@@ -5,7 +5,6 @@ on:
     branches: [main, master]
   schedule:
     - cron: '0 16 * * *'  # 北京时间 00:00 (UTC+8)
-    - cron: '0 7 * * *'   # 北京时间 15:00 (UTC+8)
 
 permissions:
   contents: write
@@ -25,8 +24,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 20, cache: npm }
       - run: npm ci
-      - run: npm run fetch-data
-      - run: npx tsx scripts/generate-history.ts
+      - run: npx tsx scripts/update-calendar.ts
       - name: Commit updated data
         run: |
           git config user.name "github-actions[bot]"
