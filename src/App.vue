@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { RouterView, RouterLink, useRoute, useRouter } from 'vue-router'
 import { useTheme } from '@/composables/useTheme'
 
@@ -8,6 +8,18 @@ const router = useRouter()
 const { isDark, toggleTheme } = useTheme()
 const currentRouteName = computed(() => route.name as string)
 const searchQuery = ref('')
+const totalSubjects = ref<number | null>(null)
+
+onMounted(async () => {
+  try {
+    const BASE = import.meta.env.BASE_URL
+    const res = await fetch(`${BASE}data/stats.json`)
+    if (res.ok) {
+      const data = await res.json()
+      totalSubjects.value = data.totalSubjects
+    }
+  } catch {}
+})
 
 function doSearch() {
   const q = searchQuery.value.trim()
@@ -164,6 +176,9 @@ const navLinks = [
     <!-- Footer -->
     <div class="h-px bg-gradient-to-r from-indigo-200 via-purple-200 to-pink-200"></div>
     <footer class="bg-white/50 backdrop-blur-sm py-10 text-center text-sm text-zinc-400 dark:bg-zinc-900/50 dark:text-zinc-500">
+      <p v-if="totalSubjects" class="mb-2 text-zinc-500 dark:text-zinc-400">
+        已收录 <span class="font-semibold text-indigo-500 dark:text-indigo-400">{{ totalSubjects.toLocaleString() }}</span> 部作品信息
+      </p>
       数据来源:
       <a
         href="https://bgm.tv"

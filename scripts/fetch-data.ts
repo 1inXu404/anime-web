@@ -250,6 +250,25 @@ async function main() {
   }
   console.log(`  ✓ ${Object.keys(cachedAnime).length + toFetch.length} subjects in ${dirtyShards.size} shards\n`)
 
+  // 4. Stats
+  console.log('[4/4] Stats...')
+  // Count unique subject IDs across all seasons
+  const allUnique = new Set<number>()
+  const seasonFiles = fs.readdirSync(SEASONS_DIR).filter(f => f.endsWith('.json'))
+  for (const file of seasonFiles) {
+    for (const s of readJSON<any[]>(path.join(SEASONS_DIR, file), [])) {
+      allUnique.add(s.id)
+    }
+  }
+  // Count subjects with detail cache
+  const withDetail = Object.keys(cachedAnime).length
+  writeJSON(path.join(OUT_DIR, 'stats.json'), {
+    totalSubjects: allUnique.size,
+    withDetail,
+    updatedAt: new Date().toISOString(),
+  })
+  console.log(`  ✓ stats.json (${allUnique.size} seasonal, ${withDetail} with details)\n`)
+
   console.log('✅ Done!')
 }
 
