@@ -48,7 +48,11 @@ const navLinks = [
 </script>
 
 <template>
-  <div class="flex min-h-screen flex-col bg-zinc-50/80 dark:bg-zinc-950/80">
+  <div class="relative flex min-h-screen flex-col">
+    <!-- Gradient background -->
+    <div class="fixed inset-0 -z-20 bg-gradient-to-br from-indigo-200 via-purple-100 to-pink-200 dark:from-indigo-950 dark:via-purple-950 dark:to-zinc-900" />
+    <!-- Softening mask overlay -->
+    <div class="fixed inset-0 -z-10 bg-white/50 dark:bg-black/40" />
     <!-- Sticky Navigation Bar -->
     <header class="sticky top-0 z-50 border-b-0 bg-white/70 backdrop-blur-xl shadow-sm dark:bg-zinc-900/70 dark:shadow-zinc-950/30">
       <nav class="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">

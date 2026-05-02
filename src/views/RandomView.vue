@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { getRandomSubject, getRandomTitles } from '@/api/bangumi'
+import { ref } from 'vue'
+import { getRandomSubject } from '@/api/bangumi'
 import type { SubjectBrowse } from '@/types/bangumi'
 
 const colors = [
@@ -10,12 +10,15 @@ const colors = [
   'bg-red-500', 'bg-yellow-500', 'bg-green-500', 'bg-blue-500',
 ]
 
-// Fallback pool — used only if real titles haven't loaded yet
-const FALLBACK_TITLES = [
-  '進撃の巨人', '鬼滅の刃', 'SPY×FAMILY', '呪術廻戦', '葬送のフリーレン',
-]
+const KATAKANA = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン'
 
-const titlePool = ref<string[]>([])
+function garbledText(): string {
+  const len = 4 + Math.floor(Math.random() * 5) // 4-8 chars
+  let s = ''
+  for (let i = 0; i < len; i++) s += KATAKANA[Math.floor(Math.random() * KATAKANA.length)]
+  return s
+}
+
 const usedIds = ref(new Set<number>())
 
 const isDrawing = ref(false)
@@ -27,12 +30,6 @@ const displayImage = ref('')
 const imageLoaded = ref(false)
 const error = ref('')
 
-// Preload real title pool on page load
-onMounted(async () => {
-  const titles = await getRandomTitles(60)
-  if (titles.length > 0) titlePool.value = titles
-})
-
 async function startDraw() {
   if (isDrawing.value) return
   isDrawing.value = true
@@ -42,14 +39,7 @@ async function startDraw() {
   error.value = ''
   displayImage.value = ''
 
-  // Fire both in parallel: titles for cycling + subject for result
-  const titlesPromise = getRandomTitles(60)
   const resultPromise = getRandomSubject(usedIds.value)
-
-  // Wait briefly for real titles, then start animation
-  const realTitles = await titlesPromise
-  const pool = realTitles.length > 0 ? realTitles : titlePool.value.length > 0 ? titlePool.value : FALLBACK_TITLES
-  titlePool.value = pool
 
   let interval = 50
   let cycle = 0
@@ -63,14 +53,13 @@ async function startDraw() {
     else interval = 400
 
     if (cycle < maxCycles) {
-      displayTitle.value = pool[Math.floor(Math.random() * pool.length)]
+      displayTitle.value = garbledText()
       displayColor.value = colors[Math.floor(Math.random() * colors.length)]
       setTimeout(tick, interval)
     } else {
       resultPromise.then(subject => {
         if (subject) {
           usedIds.value.add(subject.id)
-          // Reset if too many tracked (avoids Set growing unbounded)
           if (usedIds.value.size > 500) usedIds.value = new Set<number>()
           result.value = subject
           displayTitle.value = subject.name_cn || subject.name

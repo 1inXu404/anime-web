@@ -337,32 +337,31 @@ export async function getRandomTitles(count: number): Promise<string[]> {
 
 /**
  * Randomly pick one eligible subject from sharded cache.
- * Collects from multiple shards before picking to ensure diversity.
+ * Tries random shards one at a time until a match is found.
  * @param excludeIds IDs to skip (for no-repeat draws in same session)
  */
 export async function getRandomSubject(excludeIds?: Set<number>): Promise<SubjectBrowse | null> {
   const tried = new Set<number>()
-  const collected: Subject[] = []
 
-  // Scan multiple shards to build a diverse pool
-  for (let i = 0; i < 15; i++) {
+  for (let i = 0; i < 20; i++) {
     const start = randomShardStart(tried)
     tried.add(start)
     const data = await loadShard(start)
     if (!data) continue
 
+    const entries: Subject[] = []
     for (const entry of Object.values(data)) {
       const d = entry.detail
       if (!isEligible(d)) continue
       if (excludeIds?.has(d.id)) continue
-      collected.push(d)
+      entries.push(d)
     }
 
-    if (collected.length >= 30) break // enough candidates
+    if (entries.length > 0) {
+      const chosen = entries[Math.floor(Math.random() * entries.length)]
+      return subjectToBrowse(chosen)
+    }
   }
 
-  if (collected.length === 0) return null
-
-  const chosen = collected[Math.floor(Math.random() * collected.length)]
-  return subjectToBrowse(chosen)
+  return null
 }
