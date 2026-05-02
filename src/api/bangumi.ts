@@ -133,20 +133,13 @@ export async function getCalendar(): Promise<CleanCalendarDay[]> {
 export async function getSubjects(
   year: number, month: number, limit = 50, offset = 0
 ): Promise<PagedSubjects> {
-  // Try per-month cache file first
   const key = `${year}-${String(month).padStart(2, '0')}`
   const local = await fetchLocalJSON<SubjectBrowse[]>(`seasons/${key}.json`)
   if (local) {
     const slice = local.slice(offset, offset + limit)
     return { data: slice, total: local.length, limit, offset }
   }
-  // Fallback to API
-  const params = new URLSearchParams({
-    type: '2', sort: 'date',
-    year: String(year), month: String(month),
-    limit: String(limit), offset: String(offset),
-  })
-  return fetchJSON<PagedSubjects>(`${BGM_BASE}/v0/subjects?${params}`)
+  return { data: [], total: 0, limit, offset }
 }
 
 export async function getAllSubjects(year: number, month: number): Promise<SubjectBrowse[]> {
@@ -157,17 +150,14 @@ export async function getAllSubjects(year: number, month: number): Promise<Subje
 // ─── Subject Detail ───
 
 export async function getSubject(id: number): Promise<Subject> {
-  // Try shard cache
   const entry = await loadAnimeEntry(id)
   if (entry?.detail) return entry.detail
-  // Fallback to API
-  return fetchJSON<Subject>(`${BGM_BASE}/v0/subjects/${id}`)
+  throw new Error(`找不到 ID ${id} 的番剧详情`)
 }
 
 // ─── Episodes ───
 
 export async function getAllEpisodes(subjectId: number): Promise<DisplayEpisode[]> {
-  // Try shard cache
   const entry = await loadAnimeEntry(subjectId)
   if (entry?.episodes) {
     return entry.episodes
@@ -179,30 +169,7 @@ export async function getAllEpisodes(subjectId: number): Promise<DisplayEpisode[
         type: ep.type, desc: ep.desc,
       }))
   }
-  // Fallback to API
-  const episodes: DisplayEpisode[] = []
-  let offset = 0
-  while (true) {
-    const params = new URLSearchParams({
-      subject_id: String(subjectId),
-      offset: String(offset), limit: '100',
-    })
-    const data = await fetchJSON<PagedEpisodes>(`${BGM_BASE}/v0/episodes?${params}`)
-    if (!data.data?.length) break
-    episodes.push(...data.data
-      .filter((ep) => ep.type === 0)
-      .map((ep): DisplayEpisode => ({
-        id: ep.id, sort: ep.sort,
-        name: ep.name, name_cn: ep.name_cn,
-        airdate: ep.airdate, duration: ep.duration,
-        type: ep.type, desc: ep.desc,
-      }))
-    )
-    if (data.data.length < 100) break
-    offset += 100
-    await new Promise((r) => setTimeout(r, 150))
-  }
-  return episodes
+  return []
 }
 
 // ─── History ───

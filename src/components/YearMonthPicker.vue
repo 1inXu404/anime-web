@@ -19,7 +19,7 @@ const emit = defineEmits<{
 }>()
 
 const currentYear = new Date().getFullYear()
-const minYear = 1921
+const minYear = 1892
 const maxYear = currentYear + 1
 
 const selectedYear = ref(props.modelYear)
