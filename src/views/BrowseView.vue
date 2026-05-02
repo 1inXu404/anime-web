@@ -16,6 +16,7 @@ const animeList = ref<SubjectBrowse[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
 const availableMonths = ref<number[]>([])
+const availableYears = ref<number[]>([])
 
 // Hardcoded content filter
 const isBlocked = (a: SubjectBrowse) =>
@@ -50,6 +51,16 @@ async function loadAvailableMonths() {
   }
 }
 
+// Load available years from manifest (once)
+import.meta.env.BASE_URL
+const BASE = import.meta.env.BASE_URL
+fetch(`${BASE}data/seasons-manifest.json`)
+  .then(r => r.json())
+  .then((manifest: Record<string, number[]>) => {
+    availableYears.value = Object.keys(manifest).map(Number).sort((a, b) => a - b)
+  })
+  .catch(() => {})
+
 function onPickerChange(payload: { year: number; month: number }) {
   year.value = payload.year
   month.value = payload.month
@@ -78,6 +89,7 @@ watch([year, month], fetchAnime, { immediate: true })
           :model-year="year"
           :model-month="month"
           :available-months="availableMonths"
+          :available-years="availableYears"
           @change="onPickerChange"
         />
       </div>

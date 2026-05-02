@@ -6,11 +6,13 @@ const props = withDefaults(
     modelYear?: number
     modelMonth?: number
     availableMonths?: number[]
+    availableYears?: number[]
   }>(),
   {
     modelYear: () => new Date().getFullYear(),
     modelMonth: () => new Date().getMonth() + 1,
     availableMonths: () => [],
+    availableYears: () => [],
   },
 )
 
@@ -22,27 +24,37 @@ const currentYear = new Date().getFullYear()
 const minYear = 1892
 const maxYear = currentYear + 1
 
-const selectedYear = ref(props.modelYear)
-const selectedMonth = ref(props.modelMonth)
+const yearIndex = computed(() => {
+  if (props.availableYears.length > 0) return props.availableYears.indexOf(selectedYear.value)
+  return selectedYear.value - minYear
+})
 
-const months = [
-  '1月', '2月', '3月', '4月',
-  '5月', '6月', '7月', '8月',
-  '9月', '10月', '11月', '12月',
-]
-
-const canGoPrev = computed(() => selectedYear.value > minYear)
-const canGoNext = computed(() => selectedYear.value < maxYear)
+const canGoPrev = computed(() => {
+  if (props.availableYears.length > 0) return yearIndex.value > 0
+  return selectedYear.value > minYear
+})
+const canGoNext = computed(() => {
+  if (props.availableYears.length > 0) return yearIndex.value < props.availableYears.length - 1
+  return selectedYear.value < maxYear
+})
 
 function prevYear() {
   if (!canGoPrev.value) return
-  selectedYear.value--
+  if (props.availableYears.length > 0) {
+    selectedYear.value = props.availableYears[yearIndex.value - 1]
+  } else {
+    selectedYear.value--
+  }
   emitChange()
 }
 
 function nextYear() {
   if (!canGoNext.value) return
-  selectedYear.value++
+  if (props.availableYears.length > 0) {
+    selectedYear.value = props.availableYears[yearIndex.value + 1]
+  } else {
+    selectedYear.value++
+  }
   emitChange()
 }
 
@@ -64,9 +76,10 @@ function emitChange() {
 const yearDropdownOpen = ref(false)
 const dropdownContainerRef = ref<HTMLElement | null>(null)
 
-const yearList = computed(() =>
-  Array.from({ length: maxYear - minYear + 1 }, (_, i) => minYear + i),
-)
+const yearList = computed(() => {
+  if (props.availableYears.length > 0) return props.availableYears
+  return Array.from({ length: maxYear - minYear + 1 }, (_, i) => minYear + i)
+})
 
 function selectYear(y: number) {
   selectedYear.value = y
