@@ -14,14 +14,18 @@ const BGM_BASE = 'https://api.bgm.tv'
 // ─── Local JSON cache ───
 
 const BASE = import.meta.env.BASE_URL
+const jsonCache = new Map<string, any>()
 
 async function fetchLocalJSON<T>(filename: string): Promise<T | null> {
+  if (jsonCache.has(filename)) return jsonCache.get(filename) as T
   try {
     const res = await fetch(`${BASE}data/${filename}`)
     if (!res.ok) return null
     const ct = res.headers.get('content-type') || ''
     if (!ct.includes('application/json')) return null
-    return res.json()
+    const data = await res.json()
+    jsonCache.set(filename, data)
+    return data
   } catch {
     return null
   }
