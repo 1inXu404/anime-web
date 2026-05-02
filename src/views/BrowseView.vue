@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
-import { getAllSubjects, getAvailableMonths } from '@/api/bangumi'
+import { getAllSubjects } from '@/api/bangumi'
 import type { SubjectBrowse } from '@/types/bangumi'
 import BentoGrid from '@/components/BentoGrid.vue'
 import AnimeCard from '@/components/AnimeCard.vue'
@@ -15,8 +15,10 @@ const month = ref(now.getMonth() + 1)
 const animeList = ref<SubjectBrowse[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
-const availableMonths = ref<number[]>([])
-const availableYears = ref<number[]>([])
+
+const manifest = ref<Record<string, number[]>>({})
+const availableMonths = computed(() => manifest.value[String(year.value)] || [])
+const availableYears = computed(() => Object.keys(manifest.value).map(Number).sort((a, b) => a - b))
 
 // Hardcoded content filter
 const isBlocked = (a: SubjectBrowse) =>
@@ -43,22 +45,11 @@ async function fetchAnime() {
   }
 }
 
-async function loadAvailableMonths() {
-  availableMonths.value = await getAvailableMonths(year.value)
-  // Auto-select first available month if current is unavailable
-  if (availableMonths.value.length > 0 && !availableMonths.value.includes(month.value)) {
-    month.value = availableMonths.value[0]
+// Auto-select first available month if current is unavailable
+watch(availableMonths, (months) => {
+  if (months.length > 0 && !months.includes(month.value)) {
+    month.value = months[0]
   }
-}
-
-// Load available years from manifest (once)
-onMounted(async () => {
-  try {
-    const BASE = import.meta.env.BASE_URL
-    const res = await fetch(`${BASE}data/seasons-manifest.json`)
-    const manifest: Record<string, number[]> = await res.json()
-    availableYears.value = Object.keys(manifest).map(Number).sort((a, b) => a - b)
-  } catch {}
 })
 
 function onPickerChange(payload: { year: number; month: number }) {
@@ -66,7 +57,15 @@ function onPickerChange(payload: { year: number; month: number }) {
   month.value = payload.month
 }
 
-watch(year, loadAvailableMonths, { immediate: true })
+// Load manifest once — provides both years and months
+onMounted(async () => {
+  try {
+    const BASE = import.meta.env.BASE_URL
+    const res = await fetch(`${BASE}data/seasons-manifest.json`)
+    manifest.value = await res.json()
+  } catch {}
+})
+
 watch([year, month], fetchAnime, { immediate: true })
 </script>
 
